@@ -1,0 +1,62 @@
+<div class="ncm-gallery">
+  <header class="ncm-gallery__bar">
+    <div class="ncm-gallery__title">
+      <span class="ncm-workbench__eyebrow">이미지 갤러리</span>
+      <h2>{{title}}</h2>
+      {{#if targetLabel}}<small>{{targetLabel}}</small>{{/if}}
+    </div>
+    {{#if hasTabs}}
+    <nav class="ncm-gallery__tabs" aria-label="이미지 갈래">
+      {{#each sources}}
+      <button type="button" class="{{#if selected}}is-active{{/if}}" data-action="switchSource" data-source="{{id}}">{{label}} <span>{{count}}</span></button>
+      {{/each}}
+    </nav>
+    {{/if}}
+    {{#unless needsToken}}
+    <div class="ncm-gallery__filters">
+      <input type="search" data-gallery-search value="{{search}}" placeholder="이름·경로·분류로 조회" aria-label="이미지 조회">
+      <select data-gallery-group aria-label="분류">
+        <option value="">전체 분류</option>
+        {{#each groups}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}} ({{count}})</option>{{/each}}
+      </select>
+      <button type="button" data-action="refresh" title="목록 다시 받기" aria-label="목록 다시 받기"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    {{/unless}}
+  </header>
+
+  <div class="ncm-gallery__body">
+    {{#if needsToken}}
+    <form class="ncm-gallery__token" onsubmit="return false">
+      <h3>기록보관소 이미지 토큰</h3>
+      <p>갤러리는 기록보관소에서 이미지 목록을 받아 옵니다. 조회 전용 토큰을 한 번 입력하면 이 브라우저에 저장됩니다.</p>
+      {{#if error}}<p class="ncm-gallery__error">{{error}}</p>{{/if}}
+      <label>토큰<input type="password" data-gallery-token autocomplete="off" placeholder="토큰 붙여넣기"></label>
+      <button type="button" data-action="saveToken"><i class="fa-solid fa-key"></i> 저장하고 목록 받기</button>
+    </form>
+    {{else if error}}
+    <div class="ncm-gallery__state">
+      <p class="ncm-gallery__error">{{error}}</p>
+      <button type="button" data-action="refresh"><i class="fa-solid fa-rotate"></i> 다시 시도</button>
+    </div>
+    {{else if loading}}
+    <div class="ncm-gallery__state"><p>목록을 받는 중입니다.</p></div>
+    {{else}}
+    <div class="ncm-gallery__grid is-{{shape}}">
+      {{#each entries}}
+      <button type="button" class="ncm-gallery__card {{#if current}}is-current{{/if}}" data-action="choose" data-entry-id="{{id}}" data-group="{{group}}" data-search="{{search}}" title="{{name}}">
+        <span class="ncm-gallery__thumb"><img src="{{url}}" loading="lazy" decoding="async" alt="{{name}}"></span>
+        <span class="ncm-gallery__name">{{name}}</span>
+        <span class="ncm-gallery__meta">{{group}}{{#if size}} · {{size}}{{/if}}</span>
+        {{#if current}}<span class="ncm-gallery__badge">지금 사용 중</span>{{/if}}
+      </button>
+      {{/each}}
+    </div>
+    <p class="ncm-gallery__state" data-gallery-empty hidden>조건에 맞는 이미지가 없습니다.</p>
+    {{/if}}
+  </div>
+
+  <footer class="ncm-gallery__footer">
+    <span>{{#unless needsToken}}<strong data-gallery-count>{{total}}</strong> / {{total}}장 · 고르면 바로 칸에 들어갑니다{{/unless}}</span>
+    {{#if canPickLocal}}<button type="button" data-action="pickLocal"><i class="fa-solid fa-folder-open"></i> 로컬 파일에서 선택</button>{{/if}}
+  </footer>
+</div>

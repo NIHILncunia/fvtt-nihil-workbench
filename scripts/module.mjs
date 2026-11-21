@@ -1,3 +1,5 @@
+import { openImageGallery } from './gallery/image-gallery-app.mjs';
+import { registerGallerySettings } from './gallery/archive-images.mjs';
 import { isWorkbenchUser } from './shared/workbench-access.mjs';
 import { openStatblockImporter } from './statblock-importer/importer.mjs';
 import {
@@ -44,6 +46,7 @@ function registerApi() {
     openWorkbench,
     openWorkbenchLauncher,
     openCompendiumWorkbench,
+    openImageGallery,
     content,
     examples,
   };
@@ -330,6 +333,7 @@ registerWorkbenchDocumentSyncHooks();
 patchItemDirectoryContextMenu();
 patchActorDirectoryContextMenu();
 globalThis.Hooks?.once?.('init', () => {
+  registerGallerySettings();
   registerApi();
   registerContextHook();
   registerActorContextHook();

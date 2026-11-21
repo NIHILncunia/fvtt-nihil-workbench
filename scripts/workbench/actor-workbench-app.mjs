@@ -1,3 +1,9 @@
+import { openImageGallery } from '../gallery/image-gallery-app.mjs';
+
+// 시험에서는 globalThis.__ncmImageGalleryOpener로 갤러리 창 대신 다른 열기 함수를 끼운다.
+function imageGalleryOpener(options) {
+  return (globalThis.__ncmImageGalleryOpener ?? openImageGallery)(options);
+}
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import { loadPackDocuments, createPackDocument, packEditAllowed, requireModulePack, requirePackDocument } from './compendium-adapter.mjs';
 import {
@@ -1154,25 +1160,40 @@ function getActorWorkbenchClass() {
         this.form,
         name,
       );
-      const FilePicker = globalThis.CONFIG?.ux?.FilePicker
-        ?? globalThis.foundry?.applications?.apps?.FilePicker;
-      if (!control || !FilePicker) return;
-      const picker = new FilePicker({
-        type: 'image',
+      if (!control) return;
+      const apply = (path) => {
+        if (editorFormControl(
+          this.form,
+          name,
+        ) !== control) return;
+        control.value = path;
+        control.dispatchEvent(new Event(
+          'input',
+          { bubbles: true },
+        ));
+      };
+      const pickLocal = async () => {
+        const FilePicker = globalThis.CONFIG?.ux?.FilePicker
+          ?? globalThis.foundry?.applications?.apps?.FilePicker;
+        if (!FilePicker) return;
+        const picker = new FilePicker({
+          type: 'image',
+          current: control.value,
+          callback: apply,
+        });
+        await picker.browse();
+      };
+      // 초상화 칸은 초상화만, 토큰 칸은 토큰만 보여 주는 기록보관소 이미지 갤러리를 연다(2026-11-21).
+      imageGalleryOpener({
+        kind: name === 'tokenImg' ? 'token' : 'portrait',
         current: control.value,
-        callback: (path) => {
-          if (editorFormControl(
-            this.form,
-            name,
-          ) !== control) return;
-          control.value = path;
-          control.dispatchEvent(new Event(
-            'input',
-            { bubbles: true },
-          ));
+        targetLabel: `${this.selectedActor?.name ?? '새 액터'} · ${name === 'tokenImg' ? '토큰 이미지' : '초상화'}`,
+        onSelect: (url) => {
+          if (!this.canManageActor()) return;
+          apply(url);
         },
+        onPickLocal: pickLocal,
       });
-      await picker.browse();
     }
 
     static async _openEmbeddedItemAction(

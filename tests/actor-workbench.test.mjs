@@ -1008,7 +1008,14 @@ test(
         tokenImg: { value: 'old-token.webp', dispatchEvent() {} },
       };
       workbench.form = formControls(controls);
-      const paths = ['portrait.webp', 'token.webp'];
+      // 2026-11-21: 초상화·토큰 칸은 기록보관소 이미지 갤러리를 연다. 초상화 칸은 portrait, 토큰 칸은 token 종류.
+      const opened = [];
+      globalThis.__ncmImageGalleryOpener = async (options) => {
+        opened.push({ kind: options.kind, current: options.current });
+        if (options.kind === 'portrait') await options.onSelect('https://nihilncunia-images.com/portrait.webp');
+        else await options.onPickLocal();
+      };
+      const paths = ['token.webp'];
       globalThis.CONFIG.ux = {
         FilePicker: class {
           constructor(options) { this.options = options; }
@@ -1022,13 +1029,21 @@ test(
         },
       };
       const actions = workbench.constructor.DEFAULT_OPTIONS.actions;
-      for (const name of ['actorImg', 'tokenImg']) {
-        await actions.pickActorImage.call(
-          workbench,
-          { preventDefault() {} },
-          { dataset: { imageField: name } },
-        );
+      try {
+        for (const name of ['actorImg', 'tokenImg']) {
+          await actions.pickActorImage.call(
+            workbench,
+            { preventDefault() {} },
+            { dataset: { imageField: name } },
+          );
+        }
+      } finally {
+        delete globalThis.__ncmImageGalleryOpener;
       }
+      assert.deepEqual(opened, [
+        { kind: 'portrait', current: 'old-portrait.webp' },
+        { kind: 'token', current: 'old-token.webp' },
+      ]);
       assert.deepEqual(
         updates,
         [],
@@ -1039,7 +1054,7 @@ test(
       );
       assert.deepEqual(
         updates,
-        [{ img: 'portrait.webp', 'prototypeToken.texture.src': 'token.webp' }],
+        [{ img: 'https://nihilncunia-images.com/portrait.webp', 'prototypeToken.texture.src': 'token.webp' }],
       );
     });
   },

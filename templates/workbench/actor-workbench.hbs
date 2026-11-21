@@ -131,12 +131,12 @@
             </div>
             <div class="ncm-workbench__grid-2 ncm-actor-workbench__images">
               <div class="ncm-actor-workbench__image-field">
-                <img src="{{../selected.common.img}}" alt="초상화 미리보기" data-image-preview="actorImg">
+                <img src="{{../selected.common.img}}" alt="초상화 미리보기" data-image-preview="actorImg" data-action="pickActorImage" data-image-field="actorImg" title="클릭해서 초상화 고르기">
                 <label>초상화 경로<input type="text" name="actorImg" value="{{../selected.common.img}}"></label>
                 <button type="button" data-action="pickActorImage" data-image-field="actorImg"><i class="fa-solid fa-image"></i> 초상화 선택</button>
               </div>
               <div class="ncm-actor-workbench__image-field">
-                <img src="{{../selected.common.prototypeToken.texture.src}}" alt="토큰 이미지 미리보기" data-image-preview="tokenImg">
+                <img src="{{../selected.common.prototypeToken.texture.src}}" alt="토큰 이미지 미리보기" data-image-preview="tokenImg" data-action="pickActorImage" data-image-field="tokenImg" title="클릭해서 토큰 이미지 고르기">
                 <label>토큰 이미지 경로<input type="text" name="tokenImg" value="{{../selected.common.prototypeToken.texture.src}}"></label>
                 <button type="button" data-action="pickActorImage" data-image-field="tokenImg"><i class="fa-solid fa-image"></i> 토큰 이미지 선택</button>
               </div>
