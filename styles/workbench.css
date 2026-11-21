@@ -479,6 +479,7 @@
 .ncm-gallery__grid.is-portrait { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
 .ncm-gallery__grid.is-token { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
 .ncm-gallery__grid.is-map { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.ncm-gallery__grid.is-item { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
 .ncm-gallery-app .window-content .ncm-gallery__card { position: relative; display: grid; grid-template-rows: auto auto auto; gap: 3px; height: auto; min-height: 0; padding: 6px 6px 8px; text-align: left; border: 1px solid #3f382e; border-radius: 6px; background: linear-gradient(180deg, var(--ncm-panel-2), var(--ncm-panel)); color: var(--ncm-text); cursor: pointer; transition: border-color .12s, transform .12s; }
 .ncm-gallery-app .window-content .ncm-gallery__card:hover, .ncm-gallery-app .window-content .ncm-gallery__card:focus-visible { border-color: var(--ncm-gold); transform: translateY(-1px); outline: none; }
 .ncm-gallery-app .window-content .ncm-gallery__card.is-current { border-color: var(--ncm-gold); box-shadow: 0 0 0 1px var(--ncm-gold) inset; }
@@ -491,6 +492,8 @@
 .is-token .ncm-gallery__thumb img { object-fit: contain; }
 .is-map .ncm-gallery__thumb { aspect-ratio: 16 / 10; }
 .is-map .ncm-gallery__thumb img { object-fit: cover; }
+.is-item .ncm-gallery__thumb { aspect-ratio: 1; }
+.is-item .ncm-gallery__thumb img { object-fit: cover; }
 .ncm-gallery__name { overflow: hidden; font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .ncm-gallery__meta { overflow: hidden; color: var(--ncm-muted); font-size: 10.5px; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .ncm-gallery__badge { position: absolute; top: 10px; left: 10px; padding: 1px 7px; border-radius: 999px; background: var(--ncm-gold); color: #1a160f; font-size: 10px; font-weight: 700; }

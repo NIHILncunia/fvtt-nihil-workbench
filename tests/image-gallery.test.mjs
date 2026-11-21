@@ -92,3 +92,21 @@ test('gallery template compiles and renders shape classes, tabs and the token fo
   assert.match(token, /data-gallery-token/);
   assert.doesNotMatch(token, /ncm-gallery__grid/);
 });
+
+test('item icon gallery reads only square concept art and names it by the object', () => {
+  assert.deepEqual(galleryKind('item').sources.map((s) => [s.area, s.role]), [['concept', '정사각 설정화']]);
+  const entry = galleryEntry({
+    imageId: '9', path: 'wiki/trpg/images/settings/아이템/룩스테라/흑룡의 비늘/흑룡의 비늘 정사각 설정화.webp',
+    role: '정사각 설정화', width: 1254, height: 1254, url: 'https://nihilncunia-images.com/settings/21/x.webp', use: 'Y', world: '룩스테라',
+  }, galleryKind('item').sources[0]);
+  assert.equal(entry.name, '흑룡의 비늘');
+  assert.equal(entry.group, '룩스테라');
+  assert.ok(entry.search.includes('흑룡의 비늘'));
+});
+
+test('item workbench image button opens the item icon gallery instead of the file picker', async () => {
+  const source = await readFile(new URL('../scripts/workbench/workbench-app.mjs', import.meta.url), 'utf8');
+  const action = source.slice(source.indexOf('static async _pickItemImageAction'), source.indexOf('static async _deleteItemAction'));
+  assert.match(action, /kind: 'item'/);
+  assert.match(action, /onPickLocal: pickLocal/);
+});

@@ -1,3 +1,9 @@
+import { openImageGallery } from '../gallery/image-gallery-app.mjs';
+
+// 시험에서는 globalThis.__ncmImageGalleryOpener로 갤러리 창 대신 다른 열기 함수를 끼운다.
+function itemImageGalleryOpener(options) {
+  return (globalThis.__ncmImageGalleryOpener ?? openImageGallery)(options);
+}
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import { advancementSourceList, hasAdvancementSource } from '../shared/advancement-source.mjs';
 import { loadPackDocuments, packEditAllowed, requireModulePack, rootDocument } from './compendium-adapter.mjs';
@@ -2086,18 +2092,26 @@ function getWorkbenchClass() {
 
     static async _pickItemImageAction(event) {
       event.preventDefault();
-      const Picker = globalThis.CONFIG?.ux?.FilePicker ?? globalThis.foundry?.applications?.apps?.FilePicker;
-      if (!Picker) return;
-      new Picker({
-        type: 'image', current: this.form?.querySelector('[name=itemImg]')?.value,
-        callback: (path) => {
-          const input = this.form?.querySelector('[name=itemImg]');
-          if (input) { input.value = path; input.dispatchEvent(new Event(
-            'input',
-            { bubbles: true }
-          )); }
-        },
-      }).render(true);
+      const apply = (path) => {
+        const input = this.form?.querySelector('[name=itemImg]');
+        if (input) { input.value = path; input.dispatchEvent(new Event(
+          'input',
+          { bubbles: true }
+        )); }
+      };
+      const pickLocal = async () => {
+        const Picker = globalThis.CONFIG?.ux?.FilePicker ?? globalThis.foundry?.applications?.apps?.FilePicker;
+        if (!Picker) return;
+        await new Picker({ type: 'image', current: this.form?.querySelector('[name=itemImg]')?.value, callback: apply }).browse();
+      };
+      // 아이템 아이콘은 기록보관소의 정사각 설정화만 보여 주는 갤러리에서 고른다(2026-11-21).
+      itemImageGalleryOpener({
+        kind: 'item',
+        current: this.form?.querySelector('[name=itemImg]')?.value ?? '',
+        targetLabel: `${this.selectedItem?.name ?? '아이템'} · 아이콘`,
+        onSelect: (url) => apply(url),
+        onPickLocal: pickLocal,
+      });
     }
 
     static async _deleteItemAction(event) {

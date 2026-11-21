@@ -25,6 +25,11 @@ export const GALLERY_KINDS = Object.freeze({
       { id: 'landscape', label: '풍경', area: 'lndscp', role: '' },
     ],
   },
+  // 아이템 아이콘은 물건의 정사각 설정화(1254×1254)만 쓴다(2026-11-21 마스터 결정, 이미지 규칙 2026-11-12).
+  item: {
+    title: '아이템 아이콘',
+    sources: [{ id: 'item', label: '정사각 설정화', area: 'concept', role: '정사각 설정화' }],
+  },
 });
 
 export function galleryKind(kind) {
@@ -48,13 +53,22 @@ function baseName(path) {
 export function galleryEntry(item, source) {
   if (!item?.url || item.use === 'N') return null;
   const creature = item.creature ?? null;
-  const name = creature?.name ?? baseName(item.path) ?? item.fileName ?? item.imageId;
+  const fileName = baseName(item.path);
+  // 설정화는 「<폴더 이름> <종류>」 이름이라 종류를 떼어 물건 이름만 보인다.
+  const settingName = source.area === 'concept' && fileName && item.role && fileName.endsWith(` ${item.role}`)
+    ? fileName.slice(0, -(item.role.length + 1))
+    : fileName;
+  const name = creature?.name ?? settingName ?? item.fileName ?? item.imageId;
   const group = source.area === 'char'
     ? (creature?.classification || '분류 없음')
-    : (item.theme || '테마 없음');
+    : source.area === 'concept'
+      ? (item.world || '세계 없음')
+      : (item.theme || '테마 없음');
   const details = source.area === 'char'
     ? [item.world, creature?.pantheon].filter(Boolean)
-    : [item.theme].filter(Boolean);
+    : source.area === 'concept'
+      ? [item.role].filter(Boolean)
+      : [item.theme].filter(Boolean);
   return {
     id: `${source.id}:${item.imageId}`,
     source: source.id,

@@ -9,7 +9,7 @@ import {
 } from './archive-images.mjs';
 
 // 칸 종류마다 썸네일 비율을 다르게 둔다: 초상화는 세로, 토큰은 정사각, 맵은 가로.
-const SHAPES = Object.freeze({ portrait: 'portrait', token: 'token', map: 'map' });
+const SHAPES = Object.freeze({ portrait: 'portrait', token: 'token', map: 'map', item: 'item' });
 
 let GalleryClass;
 
@@ -191,7 +191,7 @@ export function getImageGalleryClass() {
 /**
  * 이미지 갤러리를 연다.
  * @param {object} options
- * @param {'portrait'|'token'|'map'} options.kind  보여 줄 칸 종류
+ * @param {'portrait'|'token'|'map'|'item'} options.kind  보여 줄 칸 종류
  * @param {string} [options.current]  지금 칸에 든 경로(같은 그림을 표시)
  * @param {string} [options.targetLabel]  어느 문서의 칸인지 보여 줄 문구
  * @param {(url: string, entry: object) => any} options.onSelect  고른 R2 주소를 받는다
