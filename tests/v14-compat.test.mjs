@@ -83,3 +83,39 @@ test('advancement saves rebase object-keyed advancement sources', () => {
   const removed = { toObject: () => ({ name: 'x', system: { advancement: { b: { _id: 'b', value: 2 } } } }) };
   assert.deepEqual(Object.keys(JSON.parse(rebaseItemDraftSnapshot(baseline, removed, [{ advancementId: 'a' }])).system.advancement), ['b']);
 });
+
+test('workbench access opens for full gamemasters and legacy users, not assistants', async () => {
+  const { isWorkbenchUser } = await import('../scripts/shared/workbench-access.mjs');
+  assert.equal(isWorkbenchUser({ id: 'rXB1GcSui4mDsgAn', role: 1 }), true);
+  assert.equal(isWorkbenchUser({ id: 'ai2', role: 4 }), true);
+  assert.equal(isWorkbenchUser({ id: 'assistant', role: 3 }), false);
+  assert.equal(isWorkbenchUser({ id: 'player', role: 1 }), false);
+  assert.equal(isWorkbenchUser(null), false);
+});
+
+test('deletions use the v14 ForcedDeletion operator when available and legacy keys otherwise', async () => {
+  const { addDeletion } = await import('../scripts/shared/deletion.mjs');
+  assert.deepEqual(addDeletion({}, 'flags.dae.showIcon'), { 'flags.dae.-=showIcon': null });
+  const previous = globalThis._del;
+  const operator = { forced: true };
+  globalThis._del = operator;
+  try {
+    const update = addDeletion({}, 'prototypeToken.detectionModes.seeAll');
+    assert.equal(update['prototypeToken.detectionModes.seeAll'], operator);
+  } finally {
+    if (previous === undefined) delete globalThis._del;
+    else globalThis._del = previous;
+  }
+});
+
+test('legacy DAE showIcon flags are shown as always and migrated on save', async () => {
+  const { effectFields, migrateLegacyShowIcon } = await import('../scripts/workbench/effect-fields.mjs');
+  const legacy = { name: 'x', showIcon: 1, flags: { dae: { showIcon: true } }, system: { changes: [] } };
+  const field = effectFields(legacy).find((entry) => entry.path === 'showIcon');
+  assert.equal(field.initial, '2');
+  assert.deepEqual(migrateLegacyShowIcon({ name: 'y' }, legacy), { showIcon: 2, name: 'y', 'flags.dae.-=showIcon': null });
+  assert.deepEqual(migrateLegacyShowIcon({ name: 'y' }, { flags: {} }), { name: 'y' });
+  const modern = effectFields({ name: 'x', showIcon: 0, flags: {}, system: { changes: [] } }).find((entry) => entry.path === 'showIcon');
+  assert.equal(modern.options.find((option) => option.selected).value, '0');
+  assert.ok(!effectFields({ flags: {} }, { dae: true }).some((entry) => entry.path === 'flags.dae.showIcon'));
+});

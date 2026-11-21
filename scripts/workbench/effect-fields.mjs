@@ -3,6 +3,19 @@ import {
   EFFECT_CHANGES_PATH,
   isValidChangeType,
 } from '../shared/effect-change-types.mjs';
+import { addDeletion } from '../shared/deletion.mjs';
+
+const SHOW_ICON_CHOICES = Object.freeze({
+  2: '항상 표시',
+  1: '지속시간이 있을 때만',
+  0: '표시 안 함',
+});
+
+// 예전 DAE showIcon 플래그가 켜진 효과를 저장할 때 코어 showIcon으로 옮기고 플래그를 지운다.
+export function migrateLegacyShowIcon(patch, source) {
+  if (!source?.flags?.dae?.showIcon) return patch;
+  return addDeletion({ showIcon: 2, ...patch }, 'flags.dae.showIcon');
+}
 
 const DURATION_UNITS = Object.freeze({
   seconds: '초',
@@ -149,6 +162,25 @@ export function effectFields(
       wide: true,
     },
   );
+  // v14 코어 ActiveEffect.showIcon. DAE 14는 flags.dae.showIcon을 폐기하고 이 값(2: 항상)으로 옮긴다.
+  const showIcon = source.flags?.dae?.showIcon ? 2 : (source.showIcon ?? 1);
+  add(
+    'showIcon',
+    '토큰에 효과 아이콘 표시',
+    'basic',
+    {
+      select: true,
+      number: true,
+      integer: true,
+      options: Object.entries(SHOW_ICON_CHOICES).map(([value, label]) => ({ value, label, selected: Number(value) === showIcon })),
+    },
+  );
+  if (source.flags?.dae?.showIcon) {
+    const field = fields.at(-1);
+    // 예전 DAE 플래그가 켜진 효과는 「항상 표시」를 보여 주고, 저장하면 코어 값으로 옮긴다.
+    field.initial = field.value = '2';
+    field.legacyDaeShowIcon = true;
+  }
   // v14: duration = { value, units, expiry }, 시작 시점은 최상위 start = { time, round, turn, combat }.
   add(
     'duration.value',
@@ -247,7 +279,7 @@ export function effectFields(
   );
   if (dae || source.flags?.dae) {
     add('flags.dae.durationExpression', '지속시간 수식 (초)', 'conditions');
-    for (const [key, title] of Object.entries({ showIcon: '토큰에 효과 아이콘 표시', disableIncapacitated: '행동불능 상태에서 비활성' })) {
+    for (const [key, title] of Object.entries({ disableIncapacitated: '행동불능 상태에서 비활성' })) {
       add(`flags.dae.${key}`, title, 'conditions', { boolean: true });
     }
     if (itemEffect || source.flags?.dae?.stackable !== undefined) {

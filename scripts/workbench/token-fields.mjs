@@ -1,3 +1,4 @@
+import { addDeletion } from '../shared/deletion.mjs';
 const DETECTION_PATH = 'prototypeToken.detectionModes';
 
 function localized(value) {
@@ -303,7 +304,7 @@ export function detectionModeDeletions(before, after, path = DETECTION_PATH) {
   const update = {};
   if (!before || typeof before !== 'object' || Array.isArray(before)) return update;
   for (const id of Object.keys(before)) {
-    if (!after || !Object.hasOwn(after, id)) update[`${path}.-=${id}`] = null;
+    if (!after || !Object.hasOwn(after, id)) addDeletion(update, `${path}.${id}`);
   }
   return update;
 }

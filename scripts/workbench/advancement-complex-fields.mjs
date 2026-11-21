@@ -1,4 +1,5 @@
 import { complexKind, schemaChildren } from './type-complex-fields.mjs';
+import { addDeletion } from '../shared/deletion.mjs';
 
 function syntheticField(
   name,
@@ -146,7 +147,7 @@ export function advancementDeletionPaths(
   const update = {};
   if (!original || typeof original !== 'object' || Array.isArray(original) || !next || typeof next !== 'object' || Array.isArray(next)) return update;
   for (const key of Object.keys(original)) {
-    if (!Object.hasOwn(next, key)) update[`${path}.-=${key}`] = null;
+    if (!Object.hasOwn(next, key)) addDeletion(update, `${path}.${key}`);
     else Object.assign(
       update,
       advancementDeletionPaths(

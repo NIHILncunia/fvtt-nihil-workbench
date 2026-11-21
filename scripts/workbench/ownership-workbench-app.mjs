@@ -1,4 +1,5 @@
 import { getDocumentWorkbenchClass } from './document-workbench-app.mjs';
+import { addDeletion } from '../shared/deletion.mjs';
 
 const LEVELS = Object.freeze({ 0: '조회 불가', 1: '제한 조회', 2: '조회 가능', 3: '조회·수정 가능' });
 let OwnershipClass;
@@ -37,7 +38,8 @@ export function ownershipPatch(patch, fields) {
     if (!allowed.has(path) || !Number.isInteger(value) || value < (path === 'ownership.default' ? 0 : -1) || value > 3) {
       throw new Error('사용자 권한 값을 확인하십시오.');
     }
-    result[value === -1 ? path.replace('ownership.', 'ownership.-=') : path] = value === -1 ? null : value;
+    if (value === -1) addDeletion(result, path);
+    else result[path] = value;
   }
   return result;
 }

@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from './shared/workbench-access.mjs';
 import { openStatblockImporter } from './statblock-importer/importer.mjs';
 import {
   openActorWorkbench,
@@ -51,7 +52,7 @@ function registerApi() {
 
 
 function canUseWorkbenchLauncher() {
-  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id);
+  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id) || isWorkbenchUser();
 }
 
 function injectItemDirectoryWorkbenchButton(html) {

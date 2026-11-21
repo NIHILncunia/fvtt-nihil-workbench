@@ -1,3 +1,4 @@
+import { addDeletion } from '../shared/deletion.mjs';
 const UNSAFE = new Set(['__proto__', 'prototype', 'constructor']);
 const IMMUTABLE = new Set(['_id', '_stats', '_migration', 'type']);
 const LABELS = {
@@ -225,11 +226,8 @@ export function buildDocumentPatch(
       )) !== JSON.stringify(after)
     )
       conflicts.push(path);
-    if (after === undefined) {
-      const keys = path.split('.');
-      const key = keys.pop();
-      patch[[...keys, `-=${key}`].join('.')] = null;
-    } else patch[path] = after;
+    if (after === undefined) addDeletion(patch, path);
+    else patch[path] = after;
   };
   for (const field of fields) {
     if (

@@ -4,6 +4,7 @@ import {
   effectFields,
   effectGroups,
   effectStatusOptions,
+  migrateLegacyShowIcon,
   validateEffectPatch,
 } from './effect-fields.mjs';
 
@@ -165,7 +166,8 @@ export function editEffect(
     ),
     read: () => effect.toObject(),
     save: async (patch) => {
-      const updated = await effect.update(effectStartPatch(patch, effect.toObject()));
+      const source = effect.toObject();
+      const updated = await effect.update(migrateLegacyShowIcon(effectStartPatch(patch, source), source));
       if (!updated) throw new Error('효과 저장이 취소되었습니다. 입력을 보존했습니다.');
       return updated;
     },

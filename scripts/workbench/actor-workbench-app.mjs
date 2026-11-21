@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import { loadPackDocuments, createPackDocument, packEditAllowed, requireModulePack, requirePackDocument } from './compendium-adapter.mjs';
 import {
   buildActorCreateSource,
@@ -165,7 +166,7 @@ export function readActorEditForm(form) {
 }
 
 export function canUseActorWorkbench() {
-  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id);
+  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id) || isWorkbenchUser();
 }
 
 export function actorEditorTabs(type) {

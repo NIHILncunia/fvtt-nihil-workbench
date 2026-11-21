@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import { advancementSourceList, hasAdvancementSource } from '../shared/advancement-source.mjs';
 import { loadPackDocuments, packEditAllowed, requireModulePack, rootDocument } from './compendium-adapter.mjs';
 import {
@@ -184,7 +185,7 @@ function itemTypeLabel(type) {
 
 
 function canManageWorkbenchItems() {
-  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id);
+  return PRIVILEGED_USER_IDS.has(globalThis.game?.user?.id) || isWorkbenchUser();
 }
 
 let WorkbenchClass = null;
