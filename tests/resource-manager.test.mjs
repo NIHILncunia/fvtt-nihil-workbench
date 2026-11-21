@@ -219,12 +219,13 @@ test('secret HP helpers mirror Health Monitor message counting and detect max ch
 
 test('manifest ships resource styles and entry wires secret HP and resource manager', async () => {
   const manifest = JSON.parse(await readFile(new URL('../module.json', import.meta.url), 'utf8'));
-  assert.ok(manifest.styles.includes('styles/resources.css'));
+  // 월드를 다시 열지 않아도 서식이 들어가도록 기존 workbench.css에 합쳤다(서버는 월드 실행 때의 manifest styles만 싣는다).
+  assert.deepEqual(manifest.styles, ['styles/workbench.css']);
   const entry = await readFile(new URL('../scripts/module.mjs', import.meta.url), 'utf8');
   assert.match(entry, /registerSecretHp\(\)/);
   assert.match(entry, /registerResourceManager\(\)/);
   const template = await readFile(new URL('../templates/resources/resource-manager.hbs', import.meta.url), 'utf8');
   assert.match(template, /data-action="create-resource"/);
-  const css = await readFile(new URL('../styles/resources.css', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../styles/workbench.css', import.meta.url), 'utf8');
   assert.match(css, /\.ncm-resource-manager/);
 });
