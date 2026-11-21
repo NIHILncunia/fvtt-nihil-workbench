@@ -1,0 +1,14 @@
+<div class="ncm-document-workbench__layout">
+  <header><h2>{{actorName}} · 아이템 라이브러리</h2><p>월드 또는 컴펜디움의 아이템을 복사합니다. 원본은 유지되며 추가한 항목은 이 액터의 아이템 워크벤치에서 열립니다.</p><p>아이템 하나를 최상위에 추가합니다. 보관 중인 내용물과 연결된 다른 아이템은 함께 복사하지 않습니다. 추가 후 보관 위치와 소모 대상을 확인하십시오.</p></header>
+  <div class="ncm-item-library__filters">
+    <label>원본<select name="librarySource">{{#each sources}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    <label>유형<select name="libraryType"><option value="">모든 유형</option>{{#each types}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    <label>이름<input name="libraryQuery" value="{{query}}" placeholder="아이템 이름 검색"></label>
+    <button type="button" data-action="search">검색</button>
+  </div>
+  <div class="ncm-item-library__rows">
+    {{#each rows}}<div><img src="{{img}}" alt=""><span>{{name}}<small>{{type}}</small></span><button type="button" data-action="copy" data-item-id="{{id}}" {{#if ../busy}}disabled{{/if}}>액터에 추가·편집</button></div>
+    {{else}}<p>조건에 맞는 아이템이 없습니다.</p>{{/each}}
+  </div>
+  <footer class="ncm-workbench__header-actions"><span>{{count}}개 · {{page}} / {{pages}} 페이지</span><button type="button" data-action="page" data-direction="-1" {{#unless canPrevious}}disabled{{/unless}}>이전</button><button type="button" data-action="page" data-direction="1" {{#unless canNext}}disabled{{/unless}}>다음</button></footer>
+</div>

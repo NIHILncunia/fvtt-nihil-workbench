@@ -1,0 +1,11 @@
+<div class="ncm-document-workbench__layout">
+  <header><h2>{{title}}</h2><p>{{help}}</p></header>
+  <div class="ncm-document-workbench__fields">
+    {{#each fields}}
+    <label><span>{{title}}</span><select name="{{path}}" data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>
+      {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+    </select></label>
+    {{/each}}
+  </div>
+  <footer><button type="submit" {{#unless canEdit}}disabled{{/unless}}>{{submitLabel}}</button></footer>
+</div>

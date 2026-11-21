@@ -1,0 +1,347 @@
+<div class="ncm-actor-workbench__layout">
+  <aside class="ncm-actor-workbench__browser">
+    <div class="ncm-actor-workbench__type-tabs" role="tablist" aria-label="액터 유형">
+      {{#each browser.typeTabs}}
+      <button type="button" data-action="selectActorType" data-actor-type="{{value}}" class="{{#if selected}}is-selected{{/if}}">{{label}}</button>
+      {{/each}}
+    </div>
+    <div class="ncm-actor-workbench__browser-heading">
+      <strong>{{browser.activeTypeLabel}} 목록</strong>
+      {{#if canManage}}
+      {{#if browser.isAll}}
+      <div class="ncm-workbench__header-actions">
+        <button type="button" data-action="newActor" data-actor-type="character"><i class="fa-solid fa-plus"></i> 새 PC</button>
+        <button type="button" data-action="newActor" data-actor-type="npc"><i class="fa-solid fa-plus"></i> 새 NPC</button>
+      </div>
+      {{else}}<button type="button" data-action="newActor"><i class="fa-solid fa-plus"></i> 새 액터</button>{{/if}}
+      {{/if}}
+    </div>
+    <label>이름 검색<input type="search" name="actorSearch" value="{{browser.search}}" placeholder="현재 폴더의 액터 검색"></label>
+    {{#if canManage}}
+    <div class="ncm-workbench__header-actions ncm-actor-workbench__folder-actions">
+      <button type="button" data-action="createActorFolder">폴더 생성</button>
+      {{#if browser.currentFolderId}}<button type="button" data-action="editActorFolder">폴더 편집</button><button type="button" data-action="deleteActorFolder">폴더 삭제</button>{{/if}}
+    </div>
+    {{/if}}
+    <div class="ncm-actor-workbench__folder-path">
+      {{#if browser.hasParentFolder}}
+      <button type="button" data-action="goActorParentFolder" data-actor-drop-folder="{{browser.parentFolderId}}" title="액터를 놓으면 상위 폴더로 이동합니다."><i class="fa-solid fa-arrow-left"></i> 상위 폴더</button>
+      <button type="button" data-action="goActorRootFolder" data-actor-drop-folder="" title="액터를 놓으면 최상위로 이동합니다.">최상위</button>
+      {{/if}}
+      <span data-actor-drop-folder="{{browser.currentFolderId}}">{{#if browser.currentFolderName}}{{browser.currentFolderName}}{{else}}최상위{{/if}}</span>
+      {{#if canManage}}<p class="ncm-actor-workbench__drag-hint">액터를 폴더나 상위·최상위 위치에 끌어 놓으면 이동합니다.</p>{{/if}}
+    </div>
+    <div class="ncm-actor-workbench__actor-list" data-actor-drop-folder="{{browser.currentFolderId}}">
+      {{#each browser.folders}}
+      <button type="button" data-action="openActorFolder" data-folder-id="{{id}}" data-actor-drop-folder="{{id}}" class="ncm-actor-workbench__folder-row" title="액터를 놓으면 이 폴더로 이동합니다.">
+        <i class="fa-solid fa-folder"></i><span>{{name}}</span>
+      </button>
+      {{/each}}
+      {{#each browser.rows}}
+      <button type="button" data-action="selectActor" data-actor-id="{{id}}" draggable="{{#if ../canManage}}true{{else}}false{{/if}}" class="ncm-actor-workbench__actor-row {{#if selected}}is-selected{{/if}}">
+        <img src="{{img}}" alt="" draggable="false">
+        <span class="ncm-actor-workbench__actor-name" title="{{name}}">{{name}}</span>
+        <span class="ncm-actor-workbench__actor-summary" title="{{summary}}">{{summary}}</span>
+      </button>
+      {{/each}}
+      {{#if browser.folders.length}}{{else}}{{#if browser.rows.length}}{{else}}<p class="ncm-workbench__muted">이 위치에 {{browser.activeTypeLabel}} 또는 폴더가 없습니다.</p>{{/if}}{{/if}}
+    </div>
+  </aside>
+
+  <section class="ncm-actor-workbench__editor">
+    {{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}
+    {{#if pendingCount}}<p class="ncm-workbench__notice">저장 전 입력을 보관한 액터: {{pendingCount}}개. 이 창에서 탭·액터를 바꿔도 입력은 유지됩니다. 브라우저 새로고침 전에는 저장하십시오.</p>{{/if}}
+    {{#each deletedDrafts}}
+    <details class="ncm-workbench__notice" open>
+      <summary>{{name}}: 삭제된 액터의 보관 입력</summary>
+      <p>대상이 삭제되어 저장할 수 없습니다. 필요한 값을 복사한 뒤 보관 입력을 버리십시오.</p>
+      {{#each fields}}<label>{{name}}<textarea readonly data-workbench-transient>{{value}}</textarea></label>{{/each}}
+      <button type="button" data-action="discardDeletedActorDraft" data-actor-id="{{id}}">보관 입력 버리기</button>
+    </details>
+    {{/each}}
+    {{#if sbiSummary}}
+    <details class="ncm-workbench__notice" open>
+      <summary>SBI 결과: {{sbiSummary.previewName}}</summary>
+      {{#if sbiSummary.issuesText}}<p>임포트 확인 사항</p><pre>{{sbiSummary.issuesText}}</pre>{{/if}}
+      {{#if sbiSummary.unmatched.length}}<p>한글화하지 못한 항목</p><ul>{{#each sbiSummary.unmatched}}<li>{{#if name}}{{name}}{{else}}{{this}}{{/if}}</li>{{/each}}</ul>{{/if}}
+      {{#if sbiSummary.recovery}}<button type="button" data-action="retrySbiLocalization">생성한 액터 한글화 다시 적용</button>{{/if}}
+      <button type="button" data-action="dismissSbiResult">결과 닫기</button>
+    </details>
+    {{/if}}
+    {{#if creation}}
+    <header class="ncm-workbench__item-header">
+      <div>
+        <div class="ncm-workbench__eyebrow">새 {{browser.activeTypeLabel}} 추가</div>
+        <h2>{{#if creation.name}}{{creation.name}}{{else}}새 액터{{/if}}</h2>
+      </div>
+    </header>
+    <div class="ncm-workbench__scroll ncm-actor-workbench__creation">
+      <p class="ncm-workbench__notice">생성 위치: <strong>{{creation.folderName}}</strong></p>
+      {{#if creation.isNpc}}{{#unless packTarget}}
+      <div class="ncm-actor-workbench__creation-methods">
+        <button type="button" data-action="selectNpcCreationMethod" data-creation-method="direct" class="{{#if creation.isDirect}}is-selected{{/if}}">직접 작성</button>
+        <button type="button" data-action="selectNpcCreationMethod" data-creation-method="sbi" class="{{#if creation.isSbi}}is-selected{{/if}}">SBI 문자열 사용</button>
+      </div>
+      {{/unless}}{{/if}}
+      {{#if creation.isSbi}}
+      <p class="ncm-workbench__muted">SBI Import Package를 붙여 넣으십시오. 사전 검사는 Actor를 만들지 않으며, 임포트는 이름과 설명만 한글화합니다.</p>
+      <label>Import Package<textarea name="sbiPayload" rows="20" required>{{creation.sbiPayload}}</textarea></label>
+      {{#if creation.sbiError}}<p class="ncm-workbench__error">{{creation.sbiError}}</p>{{/if}}
+      {{#if creation.sbiResult}}
+      <div class="ncm-workbench__notice">
+        <strong>{{creation.sbiResult.previewName}}</strong>
+        {{#if creation.sbiResult.imported}} 임포트 완료{{else}} 사전 검사 완료{{/if}}
+      </div>
+      {{/if}}
+      <div class="ncm-workbench__header-actions">
+        <button type="button" data-action="cancelActorCreation">취소</button>
+        <button type="button" data-action="validateSbiImport">사전 검사</button>
+        <button type="button" data-action="importSbi" class="ncm-workbench__save">임포트</button>
+      </div>
+      {{else}}
+      <div class="ncm-workbench__grid-2">
+        <label>이름<input type="text" name="actorName" value="{{creation.name}}" required></label>
+        <label>이미지 경로<input type="text" name="actorImg" value="{{creation.img}}"></label>
+      </div>
+      <div class="ncm-workbench__header-actions">
+        <button type="button" data-action="cancelActorCreation">취소</button>
+        <button type="button" data-action="saveNewActor" class="ncm-workbench__save">생성</button>
+      </div>
+      {{/if}}
+    </div>
+    {{else}}
+      {{#if selected}}
+      <header class="ncm-workbench__item-header">
+        <img src="{{selected.common.img}}" alt="" class="ncm-workbench__item-icon">
+        <div>
+          <div class="ncm-workbench__eyebrow">액터 편집기 · {{selected.typeLabel}}</div>
+          <h2>{{selected.name}}</h2>
+        </div>
+        {{#if canManage}}<div class="ncm-workbench__header-actions">{{#unless packTarget}}<button type="button" data-action="editOwnership">사용자 권한</button>{{else}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{/unless}}<button type="button" data-action="duplicateActor">액터 복제</button><button type="button" data-action="deleteActor">액터 삭제</button></div>{{/if}}
+      </header>
+      <nav class="ncm-actor-workbench__editor-tabs" aria-label="액터 편집 영역">
+        {{#each editorTabs}}<button type="button" data-action="selectActorEditorTab" data-editor-tab="{{key}}" class="{{#if selected}}is-selected{{/if}}">{{label}}</button>{{/each}}
+      </nav>
+      <div class="ncm-workbench__scroll ncm-actor-workbench__editor-form">
+        {{#each editorTabs}}
+          {{#if selected}}
+            {{#if (eq key "basic")}}
+            <div class="ncm-workbench__grid-2">
+              <label>이름<input type="text" name="actorName" value="{{../selected.name}}"></label>
+            </div>
+            <div class="ncm-workbench__grid-2 ncm-actor-workbench__images">
+              <div class="ncm-actor-workbench__image-field">
+                <img src="{{../selected.common.img}}" alt="초상화 미리보기" data-image-preview="actorImg">
+                <label>초상화 경로<input type="text" name="actorImg" value="{{../selected.common.img}}"></label>
+                <button type="button" data-action="pickActorImage" data-image-field="actorImg"><i class="fa-solid fa-image"></i> 초상화 선택</button>
+              </div>
+              <div class="ncm-actor-workbench__image-field">
+                <img src="{{../selected.common.prototypeToken.texture.src}}" alt="토큰 이미지 미리보기" data-image-preview="tokenImg">
+                <label>토큰 이미지 경로<input type="text" name="tokenImg" value="{{../selected.common.prototypeToken.texture.src}}"></label>
+                <button type="button" data-action="pickActorImage" data-image-field="tokenImg"><i class="fa-solid fa-image"></i> 토큰 이미지 선택</button>
+              </div>
+            </div>
+            <p class="ncm-workbench__muted">이미지를 선택하거나 경로를 입력한 뒤 액터 변경을 저장하십시오. 토큰 이미지는 앞으로 배치할 토큰에 적용됩니다.</p>
+            {{/if}}
+            {{#if (eq key "combat")}}
+            <div class="ncm-workbench__grid-2">
+              <label>현재 HP<input type="number" name="hpValue" value="{{../selected.common.hp.value}}"></label>
+              <label>최대 HP<input type="number" name="hpMax" value="{{../selected.common.hp.max}}"></label>
+              <label>임시 HP<input type="number" name="hpTemp" value="{{../selected.common.hp.temp}}"></label>
+              <label>AC<input type="number" name="acFlat" value="{{../selected.common.ac.flat}}"></label>
+            </div>
+            {{/if}}
+            {{#if (eq key "background")}}
+            <div class="ncm-workbench__grid-2">
+              <label>출처 책<input type="text" name="sourceBook" value="{{../selected.common.source.book}}"></label>
+              <label>출처 페이지<input type="text" name="sourcePage" value="{{../selected.common.source.page}}"></label>
+              <label>사용자 출처<input type="text" name="sourceCustom" value="{{../selected.common.source.custom}}"></label>
+            </div>
+            <label>전기 (HTML·인라인 명령)<textarea name="biography" rows="12">{{../selected.common.biography}}</textarea></label>
+            {{/if}}
+            {{#if (eq key "growth")}}
+            <div class="ncm-workbench__grid-2">
+              <label>경험치<input type="number" name="xpValue" value="{{../selected.typeSpecific.xp.value}}"></label>
+              <label class="ncm-workbench__checkbox"><input type="checkbox" name="inspiration" {{#if ../selected.typeSpecific.inspiration}}checked{{/if}}> 영감 보유</label>
+              <label>죽음 내성 성공<input type="number" min="0" max="3" name="deathSuccess" value="{{../selected.typeSpecific.death.success}}"></label>
+              <label>죽음 내성 실패<input type="number" min="0" max="3" name="deathFailure" value="{{../selected.typeSpecific.death.failure}}"></label>
+            </div>
+            {{/if}}
+            {{#if (eq key "npc")}}
+            <div class="ncm-workbench__grid-2">
+              <label>도전 등급<input type="number" step="any" min="0" name="cr" value="{{../selected.typeSpecific.cr}}"></label>
+              <div>경험치 (도전 등급으로 자동 계산): {{../selected.typeSpecific.xp.value}}</div>
+              <label>주문 시전자 레벨<input type="number" min="0" name="spellLevel" value="{{../selected.typeSpecific.spellLevel}}"></label>
+              <label>HP 공식<input type="text" name="hpFormula" value="{{../selected.typeSpecific.hpFormula}}"></label>
+            </div>
+            {{/if}}
+            {{#if (eq key "legendary")}}
+            <div class="ncm-workbench__grid-2">
+              <label>전설 행동 사용<input type="number" min="0" name="legendaryActionsSpent" value="{{../selected.typeSpecific.legendary.actions.spent}}"></label>
+              <label>전설 행동 최대<input type="number" min="0" name="legendaryActionsMax" value="{{../selected.typeSpecific.legendary.actions.max}}"></label>
+              <label>전설 저항 사용<input type="number" min="0" name="legendaryResistanceSpent" value="{{../selected.typeSpecific.legendary.resistance.spent}}"></label>
+              <label>전설 저항 최대<input type="number" min="0" name="legendaryResistanceMax" value="{{../selected.typeSpecific.legendary.resistance.max}}"></label>
+              <label class="ncm-workbench__checkbox"><input type="checkbox" name="lairValue" {{#if ../selected.typeSpecific.lair.value}}checked{{/if}}> 소굴 행동 사용</label>
+              <label>소굴 행동 이니셔티브<input type="number" name="lairInitiative" value="{{../selected.typeSpecific.lair.initiative}}"></label>
+            </div>
+            {{/if}}
+            {{#if (eq key "items")}}
+            <p class="ncm-workbench__muted">소유 항목은 같은 액터 안에서 생성·복제·삭제됩니다. 항목을 열면 아이템 워크벤치에서 본체·액티비티·성장·효과를 편집하고 액터로 돌아올 수 있습니다.</p>
+            {{#if ../canManage}}
+            <div class="ncm-workbench__grid-2">
+              <label>새 소유 항목 유형<select name="embeddedItemType">{{#each ../selected.embeddedItemTypeOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>새 소유 항목 이름<input type="text" name="embeddedItemName" placeholder="예: 얼음 숨결"></label>
+              <div class="ncm-workbench__header-actions"><button type="button" data-action="createEmbeddedItem"><i class="fa-solid fa-plus"></i> 빈 소유 항목 추가</button><button type="button" data-action="openItemLibrary"><i class="fa-solid fa-book"></i> 아이템 라이브러리에서 추가</button></div>
+            </div>
+            {{/if}}
+            {{/if}}
+            {{#if (eq key "token")}}<p>변경은 앞으로 배치할 토큰에 적용됩니다.</p><details><summary>추가 모듈 설정</summary><button type="button" data-action="openTokenConfig">전체 토큰 설정</button></details>{{/if}}
+            {{#if (eq key "spells")}}<p>계산된 주문 내성 DC: {{../selected.spellDc}} · 주문 공격 보너스: {{../selected.spellAttack}}. 시전 능력치와 보너스 공식을 저장하면 다시 계산됩니다.</p>{{/if}}
+            {{#if (eq key "advanced")}}<p>추가 시스템 필드를 편집합니다. 사용자별 조회·수정은 상단 사용자 권한 폼에서 관리합니다. 전체 액터 설정은 워크벤치 내부에 열립니다.</p><button type="button" data-action="openNativeActor">워크벤치 전체 액터 설정</button>{{/if}}
+            {{#if (eq key "effects")}}
+            <p>여러 변경값, 지속시간, 상태와 조건은 효과 편집기에서 설정합니다. 소유 아이템의 효과는 해당 아이템 편집기에서 관리합니다.</p>
+            <label>새 효과 이름<input type="text" name="effectName"></label>
+            <button type="button" data-action="createActorEffect">액터 효과 추가</button>
+            {{#each ../effects}}
+            <div class="ncm-actor-workbench__embedded-item-row">
+              <button type="button" data-action="editActorEffect" data-effect-id="{{id}}">{{name}} {{#if disabled}}(비활성){{else}}(활성){{/if}}</button>
+              <button type="button" data-action="toggleActorEffect" data-effect-id="{{id}}">{{#if disabled}}활성화{{else}}비활성화{{/if}}</button>
+              <button type="button" data-action="duplicateActorEffect" data-effect-id="{{id}}">복제</button>
+              <button type="button" data-action="deleteActorEffect" data-effect-id="{{id}}">삭제</button>
+            </div>
+            {{else}}<p>직접 적용한 액터 효과가 없습니다.</p>{{/each}}
+            {{/if}}
+          {{/if}}
+        {{/each}}
+        {{#each fieldSections}}
+        <details class="ncm-workbench__card" {{#unless collapsed}}open{{/unless}}>
+          <summary>{{title}}</summary>
+          {{#if hint}}<p class="ncm-workbench__muted">{{hint}}</p>{{/if}}
+          {{#if isHabitats}}
+          <div data-actor-habitat>
+            {{#each fields}}<input type="hidden" name="{{name}}" data-actor-edit data-habitat-source value="{{value}}">{{/each}}
+            <button type="button" data-action="addActorHabitat">서식지 추가</button>
+            {{#each rows}}
+            <div class="ncm-workbench__grid-2" data-habitat-row>
+              <label>서식지 유형<select data-habitat-type aria-label="서식지 유형 {{index}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              <label>서식지 세부 설명<input type="text" data-habitat-subtype value="{{subtype}}" aria-label="서식지 세부 설명 {{index}}"></label>
+              <button type="button" data-action="removeActorHabitat" data-habitat-index="{{index}}">서식지 삭제</button>
+            </div>
+            {{else}}<p>등록된 서식지가 없습니다.</p>{{/each}}
+          </div>
+          {{else}}{{#if isDetectionModes}}
+          <div data-token-detection>
+            {{#each fields}}<input type="hidden" name="{{name}}" data-actor-edit data-detection-source value="{{value}}">{{/each}}
+            <button type="button" data-action="addTokenDetection">감지 모드 추가</button>
+            {{#each rows}}
+            <div class="ncm-actor-workbench__detection-row" data-detection-row>
+              <label>감지 모드<select data-detection-id aria-label="감지 모드 {{index}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              <label>감지 거리<input type="number" min="0" step="any" data-detection-range value="{{range}}" placeholder="비우면 무제한" aria-label="감지 거리 {{index}}"></label>
+              <label class="ncm-workbench__checkbox"><input type="checkbox" data-detection-enabled {{#if enabled}}checked{{/if}}> 활성</label>
+              <button type="button" class="danger" data-action="removeTokenDetection" data-detection-index="{{index}}" aria-label="감지 모드 {{index}} 삭제">삭제</button>
+            </div>
+            {{else}}<p class="ncm-workbench__muted">추가 감지 모드가 없습니다. 기본 시야는 시야 사용 설정을 따릅니다.</p>{{/each}}
+          </div>
+          {{else}}
+          {{#if isAbilities}}
+          <div class="ncm-actor-workbench__ability-grid">
+            {{#each cards}}
+            <section class="ncm-actor-workbench__ability-card {{#if isProficient}}is-proficient{{/if}}" data-ability="{{key}}" aria-label="{{title}} 능력치와 내성">
+              <h4>{{title}}</h4>
+              <div class="ncm-actor-workbench__ability-inputs">
+                <label>능력치<input type="number" step="1" min="0" name="{{score.name}}" data-actor-edit value="{{score.value}}" aria-label="{{title}} 능력치"></label>
+                <label>숙련 정도<select name="{{proficiency.name}}" data-actor-edit aria-label="{{title}} 내성 숙련">{{#each proficiency.options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              </div>
+              <div class="ncm-actor-workbench__ability-modifiers">
+                <div><span>능력 보정</span><output data-ability-modifier aria-label="{{title}} 능력 보정">{{modifier}}</output></div>
+                <div><span>내성 보정</span><output data-ability-save aria-label="{{title}} 내성 보정">{{saveModifier}}</output></div>
+              </div>
+            </section>
+            {{/each}}
+          </div>
+          <details class="ncm-actor-workbench__ability-bonuses">
+            <summary>추가 보정 공식</summary>
+            <div class="ncm-workbench__grid-2">
+              {{#each bonusFields}}<label>{{label}}<input type="text" name="{{name}}" data-actor-edit value="{{value}}"></label>{{/each}}
+            </div>
+          </details>
+          {{else}}
+          {{#if isSkills}}
+          <div class="ncm-actor-workbench__skill-grid">
+            {{#each cards}}
+            <section class="ncm-actor-workbench__ability-card {{#if isProficient}}is-proficient{{/if}}" data-skill="{{key}}" aria-label="{{title}} 기술">
+              <h4>{{title}}</h4>
+              <div class="ncm-actor-workbench__ability-inputs ncm-actor-workbench__skill-inputs">
+                <label>기반 능력<input type="text" readonly value="{{ability}}" aria-label="{{title}} 기반 능력"></label>
+                <label>숙련 정도<select name="{{proficiency.name}}" data-actor-edit aria-label="{{title}} 기술 숙련">{{#each proficiency.options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              </div>
+              <div class="ncm-actor-workbench__ability-modifiers">
+                <div><span>판정 보정</span><output data-skill-modifier aria-label="{{title}} 판정 보정">{{modifier}}</output></div>
+                <div><span>수동 판정</span><output data-skill-passive aria-label="{{title}} 수동 판정">{{passive}}</output></div>
+              </div>
+            </section>
+            {{/each}}
+          </div>
+          <details class="ncm-actor-workbench__ability-bonuses">
+            <summary>기술 추가 보정 공식</summary>
+            <div class="ncm-workbench__grid-2">
+              {{#each bonusFields}}<label>{{label}}<input type="text" name="{{name}}" data-actor-edit value="{{value}}"></label>{{/each}}
+            </div>
+          </details>
+          {{else}}
+          <div class="ncm-workbench__grid-2">
+            {{#each fields}}
+            <label class="{{#if isBoolean}}ncm-workbench__checkbox{{/if}}">
+              {{#if isBoolean}}<input type="checkbox" name="{{name}}" data-actor-edit {{#if value}}checked{{/if}}> {{label}}
+              {{else}}{{label}}
+                {{#if isSet}}
+                <select multiple name="{{name}}" data-actor-edit size="6">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+                {{else}}{{#if isSelect}}
+                <select name="{{name}}" data-actor-edit>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+                {{else}}{{#if isMultiline}}<textarea name="{{name}}" data-actor-edit rows="4">{{value}}</textarea>
+                {{else}}{{#if isJson}}<textarea name="{{name}}" data-actor-edit rows="4">{{value}}</textarea>
+                {{else}}{{#if isColor}}<span class="ncm-actor-workbench__color-field"><input type="color" data-token-color-picker value="{{pickerValue}}" aria-label="{{label}} 선택"><input type="text" name="{{name}}" data-actor-edit value="{{value}}" placeholder="#RRGGBB" aria-label="{{label}}"></span>
+                {{else}}<input type="{{#if isNumber}}number{{else}}text{{/if}}" step="{{#if integer}}1{{else}}{{#if step}}{{step}}{{else}}any{{/if}}{{/if}}" name="{{name}}" data-actor-edit value="{{value}}" {{#if (eq min 0)}}min="0"{{else}}{{#if min}}min="{{min}}"{{/if}}{{/if}} {{#if max}}max="{{max}}"{{/if}}>{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}
+              {{/if}}
+            </label>
+            {{/each}}
+          </div>
+          {{/if}}
+          {{/if}}
+          {{/if}}
+          {{/if}}
+          {{#if isTokenVision}}<button type="button" data-action="applyTokenVisionDefaults">시야 모드 기본값 적용</button>{{/if}}
+        </details>
+        {{/each}}
+        {{#each itemGroups}}
+        <details class="ncm-workbench__card" open>
+          <summary>{{title}} ({{rows.length}})</summary>
+          {{#if ../canManage}}{{#if canCreate}}
+          <div class="ncm-workbench__header-actions"><button type="button" data-action="createEmbeddedItem" data-item-type="{{type}}">{{title}} 추가</button><button type="button" data-action="openItemLibrary" data-item-type="{{type}}">{{title}} 라이브러리</button></div>
+          {{/if}}{{/if}}
+          {{#each rows}}
+          <div class="ncm-actor-workbench__embedded-item-row">
+            <button type="button" data-action="openEmbeddedItem" data-embedded-item-id="{{id}}"><img src="{{img}}" alt=""><span>{{name}}</span><small class="ncm-workbench__muted">{{summary}}</small></button>
+            {{#if ../../canManage}}
+            <button type="button" data-action="duplicateEmbeddedItem" data-embedded-item-id="{{id}}">복제</button>
+            <button type="button" data-action="deleteEmbeddedItem" data-embedded-item-id="{{id}}">삭제</button>
+            {{/if}}
+          </div>
+          {{else}}<p>등록된 항목이 없습니다.</p>{{/each}}
+        </details>
+        {{/each}}
+        {{#if canManage}}
+        <div class="ncm-actor-workbench__item-import" data-owned-item-drop>
+          <p>기존 아이템을 여기에 끌어 놓거나 UUID로 가져옵니다.</p>
+          <label>월드·컴펜디움 아이템 UUID<input type="text" name="itemImportUuid" placeholder="Item.… 또는 Compendium.…"></label>
+          <button type="button" data-action="importOwnedItem">소유 항목으로 복사</button>
+        </div>
+        <div class="ncm-workbench__header-actions"><button type="button" data-action="discardActorDraft">보관한 입력 버리기</button><button type="button" data-action="saveActor" class="ncm-workbench__save">액터 변경 저장</button></div>
+        {{/if}}
+      </div>
+      {{else}}
+      <div class="ncm-workbench__empty"><div><i class="fa-solid fa-users"></i><p>왼쪽에서 PC 또는 NPC를 선택하거나 새 액터를 추가하십시오.</p></div></div>
+      {{/if}}
+    {{/if}}
+  </section>
+</div>

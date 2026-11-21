@@ -1,0 +1,19 @@
+*.zip
+logs/
+.DS_Store
+Thumbs.db
+.idea/
+node_modules/
+package-lock.json
+
+# Local browser verification artifacts; never commit session traces or auth state.
+.playwright-cli/
+output/playwright/
+
+# Foundry LevelDB runtime lock and diagnostic files
+packs/**/LOCK
+packs/**/LOG
+packs/**/LOG.old
+
+# 개발 기록(공개 저장소에는 올리지 않는다. 비공개 원본 저장소 fvtt-nihil-compendium에 있다)
+docs/

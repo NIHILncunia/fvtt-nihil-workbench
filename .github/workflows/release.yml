@@ -1,0 +1,85 @@
+name: Release Module
+
+# v* 태그를 푸시하면 시험을 돌리고 module.json·module.zip을 GitHub 릴리스로 올린다.
+# Foundry는 module.json의 manifest 주소(releases/latest/download/module.json)로 새 판을 확인한다.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: node --test tests/*.test.mjs
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+
+          MANIFEST_VERSION="$(node -p "require('./module.json').version")"
+          if [ "${MANIFEST_VERSION}" != "${VERSION}" ]; then
+            echo "module.json version ${MANIFEST_VERSION} does not match tag ${TAG}" >&2
+            exit 1
+          fi
+
+          mkdir -p dist/package
+          for path in module.json scripts styles templates packs assets data; do
+            cp -R "${path}" dist/package/
+          done
+          find dist/package/packs -type f \( -name LOCK -o -name LOG -o -name 'LOG.old' \) -delete
+
+          node -e '
+            const fs = require("fs");
+            const file = "dist/package/module.json";
+            const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+            const repo = process.env.REPO_URL;
+            manifest.url = repo;
+            manifest.manifest = `${repo}/releases/latest/download/module.json`;
+            manifest.download = `${repo}/releases/download/${process.env.TAG}/module.zip`;
+            fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
+          '
+
+          cp dist/package/module.json dist/module.json
+          (
+            cd dist/package
+            zip -qr ../module.zip .
+          )
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/module.json
+            dist/module.zip
+          generate_release_notes: true

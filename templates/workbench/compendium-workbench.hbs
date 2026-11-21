@@ -1,0 +1,33 @@
+<div class="ncm-compendium-workbench__content">
+  <p>컨셉별 모듈 팩에 직접 등록하고 편집합니다. 저장한 데이터는 이 모듈의 컴펜디움에 남습니다.</p>
+  <div class="ncm-workbench__grid-2">
+    <label>컨셉<select name="packConcept">{{#each concepts}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
+    <label>컴펜디움<select name="packTarget">{{#each packs}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}} · {{typeLabel}}</option>{{/each}}</select></label>
+  </div>
+  <div class="ncm-workbench__grid-2">
+    <label>이름 검색<input type="search" name="packSearch" value="{{query}}" placeholder="컴펜디움 전체 검색"></label>
+    <div class="ncm-workbench__header-actions"><button type="button" data-action="choose">선택·검색 적용</button><button type="button" data-action="refresh">목록 새로고침</button></div>
+  </div>
+  {{#if error}}<p class="ncm-workbench__error" role="alert">{{error}}</p>{{/if}}
+  {{#if pack}}
+  <p class="ncm-workbench__notice">대상: <strong>{{pack.name}}</strong> · {{#if pack.locked}}편집 잠김{{else}}편집 잠금 해제{{/if}}
+    {{#if canToggleLock}}<button type="button" data-action="toggleLock">{{#if pack.locked}}편집 잠금 해제{{else}}편집 잠그기{{/if}}</button>{{/if}}
+  </p>
+  {{#unless canWrite}}<p class="ncm-workbench__muted">현재 팩은 조회만 가능합니다. 편집 잠금과 팩 소유 권한을 확인하십시오.</p>{{/unless}}
+  <fieldset>
+    <legend>새 데이터 등록</legend>
+    <div class="ncm-workbench__grid-2">
+      <label>이름<input type="text" name="packEntryName" value="{{draft.name}}" placeholder="새 항목 이름"></label>
+      <label>유형<select name="packEntryType">{{#each types}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    </div>
+    <label>이미지 경로<input type="text" name="packEntryImg" value="{{draft.img}}" placeholder="modules/nihil-compendium-module/assets/..."></label>
+    <button type="button" data-action="create" {{#unless canWrite}}disabled{{/unless}}>컴펜디움에 등록하고 편집</button>
+  </fieldset>
+  <div class="ncm-workbench__header-actions"><strong>{{total}}개 항목</strong><button type="button" data-action="page" data-direction="-1" {{#unless hasPrevious}}disabled{{/unless}}>이전</button><span>{{pageLabel}}</span><button type="button" data-action="page" data-direction="1" {{#unless hasNext}}disabled{{/unless}}>다음</button></div>
+  <div class="ncm-compendium-workbench__entries">
+    {{#each entries}}
+    <button type="button" data-action="edit" data-entry-id="{{id}}" class="ncm-compendium-workbench__entry"><img src="{{img}}" alt=""><span>{{name}}</span><small>{{type}}</small></button>
+    {{else}}<p class="ncm-workbench__muted">조건에 맞는 항목이 없습니다.</p>{{/each}}
+  </div>
+  {{else}}<p class="ncm-workbench__notice">이 모듈에 등록된 액터·아이템 컴펜디움이 없습니다.</p>{{/if}}
+</div>

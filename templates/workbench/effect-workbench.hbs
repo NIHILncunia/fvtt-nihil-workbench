@@ -1,0 +1,59 @@
+<div class="ncm-document-workbench__layout ncm-effect-workbench">
+  <header>
+    <h2>{{title}}</h2>
+    <p>{{parentName}} · {{effectType}}</p>
+    <p>{{help}}</p>
+  </header>
+  <div class="ncm-effect-workbench__body">
+    {{#each groups}}
+    <fieldset class="ncm-effect-workbench__section">
+      <legend>{{title}}</legend>
+      <div class="ncm-document-workbench__fields ncm-effect-workbench__fields">
+        {{#each fields}}
+        <label class="{{#if wide}}is-wide{{/if}}">
+          <span>{{title}}</span>
+          {{#if boolean}}
+          <input type="checkbox" name="{{path}}" data-document-path="{{path}}" {{checked value}} {{#unless ../../canEdit}}disabled{{/unless}}>
+          {{else if select}}
+          <select name="{{path}}" data-document-path="{{path}}" {{#unless ../../canEdit}}disabled{{/unless}}>
+            {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{else if multiline}}
+          <textarea name="{{path}}" data-document-path="{{path}}" rows="3" {{#unless ../../canEdit}}disabled{{/unless}}>{{value}}</textarea>
+          {{else}}
+          <input type="{{#if number}}number{{else}}text{{/if}}" name="{{path}}" data-document-path="{{path}}" value="{{value}}" {{#if number}}step="{{#if integer}}1{{else}}any{{/if}}"{{/if}} {{#unless ../../canEdit}}disabled{{/unless}}>
+          {{#if image}}<button type="button" data-action="pickEffectImage" {{#unless ../../canEdit}}disabled{{/unless}}>이미지 선택</button>{{/if}}
+          {{/if}}
+        </label>
+        {{/each}}
+      </div>
+      {{#if (eq id "conditions")}}<p class="ncm-effect-workbench__hint">조건식과 지속시간 수식은 DAE가 평가합니다. 빈 조건은 조건 없음입니다. 전이 효과의 활성 조건과 행동불능·사용자 적용은 활성 모듈의 동작을 따릅니다.</p>{{/if}}
+    </fieldset>
+    {{/each}}
+    <fieldset class="ncm-effect-workbench__section ncm-document-workbench__changes" data-effect-changes>
+      <legend>변경값</legend>
+      <p class="ncm-effect-workbench__hint">비어 있는 우선순위는 적용 방식의 기본 우선순위를 사용합니다. 값에는 숫자·텍스트·시스템이 지원하는 수식을 입력합니다.</p>
+      {{#each changeRows}}
+      <div data-effect-change>
+        <label>변경 경로<input type="text" data-change-key value="{{key}}" placeholder="system.attributes.ac.bonus" {{#unless ../canEdit}}disabled{{/unless}}></label>
+        <label>적용 방식<select data-change-type {{#unless ../canEdit}}disabled{{/unless}}>{{#each types}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+        <label>우선순위<input type="number" step="any" data-change-priority value="{{priority}}" placeholder="자동" {{#unless ../canEdit}}disabled{{/unless}}></label>
+        <button type="button" data-action="removeChange" data-change-index="{{index}}" {{#unless ../canEdit}}disabled{{/unless}}>행 제거</button>
+        <label>변경값<textarea data-change-value rows="3" {{#unless ../canEdit}}disabled{{/unless}}>{{value}}</textarea></label>
+      </div>
+      {{/each}}
+      <button type="button" data-action="addChange" {{#unless canEdit}}disabled{{/unless}}>변경값 추가</button>
+    </fieldset>
+    <fieldset class="ncm-effect-workbench__section" data-effect-statuses>
+      <legend>부여 상태</legend>
+      <div class="ncm-effect-workbench__statuses">
+        {{#each statusOptions}}<label><input type="checkbox" data-status-id="{{id}}" {{checked checked}} {{#unless ../canEdit}}disabled{{/unless}}> {{label}}</label>{{/each}}
+      </div>
+      <div class="ncm-effect-workbench__custom-status">
+        <label>사용자 지정 상태 ID<input type="text" data-new-status placeholder="모듈에 등록한 상태 ID" {{#unless canEdit}}disabled{{/unless}}></label>
+        <button type="button" data-action="addStatus" {{#unless canEdit}}disabled{{/unless}}>상태 추가</button>
+      </div>
+    </fieldset>
+  </div>
+  <footer><button type="submit" {{#unless canEdit}}disabled{{/unless}}>{{submitLabel}}</button></footer>
+</div>

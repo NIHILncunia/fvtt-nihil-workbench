@@ -1,0 +1,920 @@
+{{#*inline "typeField"}}
+            {{#if isComplex}}
+            <div class="ncm-workbench__field-wide ncm-workbench__compound" data-type-complex-root>
+              <strong>{{label}}</strong>
+              <input type="hidden" data-type-field data-type-path="{{path}}" data-type-kind="complex" value="{{value}}">
+              {{> typeCompoundNode editor}}
+            </div>
+            {{else}}
+            <label class="ncm-workbench__type-field {{#if isJson}}is-json{{/if}}">
+              <span>{{label}}</span>
+              {{#if hasChoices}}<select data-type-field data-type-path="{{path}}" data-type-kind="{{kind}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>{{else}}
+              {{#if isBoolean}}<input type="checkbox" data-type-field data-type-path="{{path}}" data-type-kind="{{kind}}" {{#if value}}checked{{/if}}>{{/if}}
+              {{#if isNumber}}<input type="number" step="any" data-type-field data-type-path="{{path}}" data-type-kind="{{kind}}" value="{{value}}">{{/if}}
+              {{#if isText}}<input type="text" data-type-field data-type-path="{{path}}" data-type-kind="{{kind}}" value="{{value}}">{{/if}}
+              {{#if isJson}}<textarea rows="3" data-type-field data-type-path="{{path}}" data-type-kind="{{kind}}">{{value}}</textarea>{{/if}}
+              {{/if}}
+              <small>{{path}}</small>
+            </label>
+            {{/if}}
+{{/inline}}
+{{#*inline "activityEditor"}}
+<div class="ncm-workbench__activity-editor" data-activity-editor>
+  {{#if selected.activityWorkspace.isSystemManaged}}
+  <p class="ncm-workbench__notice">시설 명령 액티비티는 시스템이 자동 생성하고 관리합니다. 시설 본체에서 건설·명령·제작 설정을 수정하십시오.</p>
+  {{else}}
+  {{#if selected.activityWorkspace.isNative}}
+  <nav class="ncm-workbench__activity-tabs" role="tablist" aria-label="액티비티 편집">
+    {{#each selected.activityTabs}}<button type="button" role="tab" data-action="selectActivityTab" data-activity-tab="{{id}}" aria-selected="{{active}}" aria-controls="ncm-activity-panel-{{id}}" id="ncm-activity-tab-{{id}}" {{#if active}}class="is-active"{{/if}}>{{label}}</button>{{/each}}
+  </nav>
+  {{#each selected.activityTabs}}
+  <section role="tabpanel" id="ncm-activity-panel-{{id}}" aria-labelledby="ncm-activity-tab-{{id}}" data-activity-panel="{{id}}" {{#unless active}}hidden{{/unless}}>
+    {{#if isIdentity}}
+            <div class="ncm-workbench__grid-2">
+              <label>이름<input type="text" name="activityWorkspaceName" value="{{@root.selected.activityWorkspace.name}}" placeholder="예: Midi Damage"></label>
+              <label>액티비티 유형<select disabled>{{#each @root.selected.activityWorkspace.typeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+            </div>
+
+    {{/if}}
+    {{#if isActivation}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>발동</legend>
+              <div class="ncm-workbench__grid-4">
+                <label>발동 방식<select name="activityWorkspaceActivationType">{{#each @root.selected.activityWorkspace.activationOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label>수치<input type="number" name="activityWorkspaceActivationValue" min="0" step="1" value="{{@root.selected.activityWorkspace.activation.value}}"></label>
+                <label class="ncm-workbench__activity-workspace-span-2">조건<input type="text" name="activityWorkspaceActivationCondition" value="{{@root.selected.activityWorkspace.activation.condition}}"></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>사용 횟수와 회복</legend>
+              <div class="ncm-workbench__grid-2">
+                <label>소모 횟수<input type="number" name="activityWorkspaceUsesSpent" min="0" step="1" value="{{@root.selected.activityWorkspace.uses.spent}}"></label>
+                <label>최대 사용 횟수<input type="text" name="activityWorkspaceUsesMax" value="{{@root.selected.activityWorkspace.uses.max}}" placeholder="예: 3 또는 @prof"></label>
+              </div>
+              <div class="ncm-workbench__recovery-list">
+                {{#each @root.selected.activityWorkspace.recoveryRows}}
+                <div class="ncm-workbench__recovery-row" data-activity-workspace-recovery-row>
+                  <label>회복 시점<select data-activity-workspace-recovery-period>{{#each periodOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                  <label>회복 방식<select data-activity-workspace-recovery-type>{{#each typeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                  <label>회복식<input type="text" data-activity-workspace-recovery-formula value="{{formula}}" placeholder="수식 회복 또는 재충전"></label>
+                  <button type="button" class="icon danger" data-action="removeActivityWorkspaceRecovery" data-activity-workspace-recovery-index="{{index}}"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                {{/each}}
+              </div>
+              <button type="button" data-action="addActivityWorkspaceRecovery"><i class="fa-solid fa-plus"></i> 회복 규칙 추가</button>
+            </fieldset>
+
+    {{/if}}
+    {{#if isTargets}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>사거리 · 대상 · 범위</legend>
+              <div class="ncm-workbench__grid-4">
+                <label>사거리<input type="text" name="activityWorkspaceRangeValue" value="{{@root.selected.activityWorkspace.range.value}}" placeholder="예: 60"></label>
+                <label>사거리 단위<select name="activityWorkspaceRangeUnits">{{#each @root.selected.activityWorkspace.rangeUnitOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label class="ncm-workbench__activity-workspace-span-2">특수 사거리<input type="text" name="activityWorkspaceRangeSpecial" value="{{@root.selected.activityWorkspace.range.special}}"></label>
+                <label>대상<select name="activityWorkspaceTargetType">{{#each @root.selected.activityWorkspace.targetOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label>대상 수<input type="text" name="activityWorkspaceTargetCount" value="{{@root.selected.activityWorkspace.target.count}}" placeholder="예: 1"></label>
+                <label class="ncm-workbench__activity-workspace-span-2">특수 대상<input type="text" name="activityWorkspaceTargetSpecial" value="{{@root.selected.activityWorkspace.target.special}}"></label>
+                <label>범위 형태<select name="activityWorkspaceTemplateType">{{#each @root.selected.activityWorkspace.templateOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label>범위 크기<input type="text" name="activityWorkspaceTemplateSize" value="{{@root.selected.activityWorkspace.target.template.size}}" placeholder="예: 10"></label>
+                <label>범위 단위<select name="activityWorkspaceTemplateUnits">{{#each @root.selected.activityWorkspace.templateUnitOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              </div>
+            </fieldset>
+
+    {{/if}}
+    {{#if isType}}
+            {{#if @root.selected.activityWorkspace.supportsDamage}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>피해</legend>
+              {{#each @root.selected.activityWorkspace.damageRows}}
+              <div class="ncm-workbench__damage-row" data-activity-workspace-damage-row>
+                <label>피해 주사위식<input type="text" data-activity-workspace-damage-formula value="{{formula}}" placeholder="예: 2d6 + 1"></label>
+                <button type="button" class="icon danger" data-action="removeActivityWorkspaceDamage" data-activity-workspace-damage-index="{{index}}"><i class="fa-solid fa-trash"></i></button>
+                <div class="ncm-workbench__damage-type-grid">
+                  {{#each damageTypes}}
+                  <button type="button" class="ncm-workbench__damage-type-option" data-action="toggleDamageType" data-activity-workspace-damage-type data-damage-type="{{value}}" aria-pressed="{{#if selected}}true{{else}}false{{/if}}">
+                    <span class="ncm-workbench__check-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                    {{#if icon}}<dnd5e-icon src="{{icon}}"></dnd5e-icon>{{else}}<i class="fa-solid fa-burst"></i>{{/if}}
+                    <span class="ncm-workbench__damage-type-label">{{label}}</span>
+                  </button>
+                  {{/each}}
+                </div>
+              </div>
+              {{/each}}
+              <button type="button" data-action="addActivityWorkspaceDamage"><i class="fa-solid fa-plus"></i> 피해 행 추가</button>
+            </fieldset>
+            {{/if}}
+
+            {{#if @root.selected.activityWorkspace.supportsHealing}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>회복</legend>
+              <label>회복 주사위식<input type="text" name="activityWorkspaceHealingFormula" value="{{@root.selected.activityWorkspace.healing.formula}}" placeholder="예: 2d8 + 3"></label>
+              <div class="ncm-workbench__property-grid">
+                {{#each @root.selected.activityWorkspace.healingTypes}}
+                <label class="ncm-workbench__property-option"><input type="checkbox" name="activityWorkspaceHealingTypes" value="{{value}}" {{#if selected}}checked{{/if}}> {{label}}</label>
+                {{/each}}
+              </div>
+            </fieldset>
+            {{/if}}
+
+            {{#if @root.selected.activityWorkspace.isAttack}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>공격</legend>
+              <div class="ncm-workbench__grid-2">
+                <label>사용 능력치<select name="activityWorkspaceAttackAbility">{{#each @root.selected.activityWorkspace.attackAbilityOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label>공격 보너스<input type="text" name="activityWorkspaceAttackBonus" value="{{@root.selected.activityWorkspace.attack.bonus}}"></label>
+              </div>
+            </fieldset>
+            {{/if}}
+
+            {{#if @root.selected.activityWorkspace.isSave}}
+            <fieldset class="ncm-workbench__activity-workspace-group">
+              <legend>내성 굴림</legend>
+              <div class="ncm-workbench__grid-2">
+                <label>내성 능력치 (여러 개 선택)<select name="activityWorkspaceSaveAbilities" multiple size="3">{{#each @root.selected.activityWorkspace.saveAbilityOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                <label>내성 난이도<input type="text" name="activityWorkspaceSaveDc" value="{{@root.selected.activityWorkspace.save.dc}}" placeholder="예: 17"></label>
+                <label>계산 방식<input type="text" name="activityWorkspaceSaveCalculation" value="{{@root.selected.activityWorkspace.save.calculation}}"></label>
+                <label>성공 시 피해<select name="activityWorkspaceSaveOnSave">{{#each @root.selected.activityWorkspace.saveOnSaveOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+              </div>
+            </fieldset>
+            {{/if}}
+
+    {{/if}}
+    {{#each groups}}
+    <details class="ncm-workbench__activity-tab-group ncm-workbench__collapsible" data-section-key="activities.tab.{{../id}}.{{key}}" open>
+      <summary><strong>{{label}}</strong></summary>
+      <div class="ncm-workbench__type-field-grid">{{#each fields}}{{> activityField this}}{{/each}}</div>
+    </details>
+    {{/each}}
+  </section>
+  {{/each}}
+            <div class="ncm-workbench__activity-workspace-actions">
+              <button type="button" data-action="saveActivityWorkspace"><i class="fa-solid fa-floppy-disk"></i> 액티비티 저장</button>
+              {{#if selected.activityWorkspace.isCreate}}<button type="button" data-action="cancelActivityWorkspace"><i class="fa-solid fa-xmark"></i> 작성 취소</button>{{else}}
+              <button type="button" data-action="duplicateActivity"><i class="fa-regular fa-copy"></i> 복제</button>
+              <button type="button" data-action="openActivityAdvanced">워크벤치 전체 액티비티 설정</button>
+              <button type="button" data-action="deleteActivity" class="danger"><i class="fa-solid fa-trash"></i> 삭제</button>{{/if}}
+            </div>
+
+  {{else}}
+  {{#if selected.isExternalActivity}}
+  <div class="ncm-workbench__activity-external">
+    <strong>외부 액티비티 <span>{{selected.selectedActivity.type}}</span></strong>
+    <p class="ncm-workbench__muted">공통 설정은 아래에서 수정합니다. 모듈 고유 설정을 확인하는 내부 전체 설정은 전용 일반 폼과 지원 범위가 다릅니다.</p>
+    <button type="button" data-action="openActivityAdvanced">워크벤치 전체 액티비티 설정</button>
+    <details class="ncm-workbench__collapsible" data-section-key="activities.external.source">
+      <summary>원본 데이터 확인</summary>
+      <textarea class="ncm-workbench__raw-source" rows="8" readonly>{{selected.externalActivitySource}}</textarea>
+    </details>
+    {{#if selected.hasActivityCommonFields}}
+    {{#each selected.activityCommonFieldGroups}}
+    <details class="ncm-workbench__activity-tab-group ncm-workbench__collapsible" data-section-key="activity-common.{{key}}" open>
+      <summary><strong>{{label}}</strong></summary>
+      <div class="ncm-workbench__type-field-grid">{{#each fields}}{{> activityField this common=true}}{{/each}}</div>
+    </details>
+    {{/each}}
+    {{/if}}
+  </div>
+  {{/if}}
+  {{/if}}
+  {{/if}}
+</div>
+{{/inline}}
+{{#*inline "activityCompoundNode"}}
+  {{#unless isLeaf}}<div class="ncm-workbench__compound-group">{{/unless}}
+  {{#if showLabel}}{{#unless isLeaf}}<strong>{{label}}</strong>{{/unless}}{{/if}}
+  {{#if isNullable}}<button type="button" data-action="toggleActivityObject" data-complex-address="{{address}}">{{#if isEnabled}}설정 해제{{else}}설정 사용{{/if}}</button>{{/if}}
+  {{#if isMapping}}
+  <div class="ncm-workbench__compound-list">
+    {{#each children}}
+    <div class="ncm-workbench__compound-row">
+      <div class="ncm-workbench__compound-row-header"><strong>{{mapKey}}</strong><button type="button" data-action="removeActivityMapping" data-complex-address="{{mapAddress}}" data-complex-key="{{mapKey}}">배정 삭제</button></div>
+      {{> activityCompoundNode this}}
+    </div>
+    {{else}}<p class="ncm-workbench__muted">등록된 배정이 없습니다.</p>{{/each}}
+    <div class="ncm-workbench__compound-row-header">
+      {{#if hasKeyOptions}}<select data-complex-new-key>{{#each keyOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select>{{else}}<input type="text" data-complex-new-key placeholder="{{keyPlaceholder}}">{{/if}}
+      <button type="button" data-action="addActivityMapping" data-complex-address="{{address}}">배정 추가</button>
+    </div>
+  </div>
+  {{/if}}
+  {{#if isList}}
+  <div class="ncm-workbench__compound-list">
+    {{#each rows}}
+    <div class="ncm-workbench__compound-row">
+      <div class="ncm-workbench__compound-row-header"><strong>항목 {{ordinal}}</strong><button type="button" data-action="removeActivityEntry" data-complex-list-address="{{address}}" data-complex-index="{{index}}"><i class="fa-solid fa-trash"></i> 삭제</button></div>
+      {{> activityCompoundNode node}}
+    </div>
+    {{else}}<p class="ncm-workbench__muted">등록된 항목이 없습니다.</p>{{/each}}
+    <button type="button" data-action="addActivityEntry" data-complex-list-address="{{address}}"><i class="fa-solid fa-plus"></i> 항목 추가</button>
+  </div>
+  {{/if}}
+  {{#if isObject}}
+  <div class="ncm-workbench__compound-grid">
+    {{#each children}}{{> activityCompoundNode this}}{{/each}}
+  </div>
+  {{/if}}
+  {{#unless isLeaf}}</div>{{/unless}}
+  {{#if isLeaf}}
+  <label class="ncm-workbench__type-field">
+    <span>{{label}}</span>
+    {{#if hasChoices}}
+    <select data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if refresh}}data-complex-refresh{{/if}}>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    {{else}}
+      {{#if isBoolean}}<input type="checkbox" data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if refresh}}data-complex-refresh{{/if}} {{#if value}}checked{{/if}}>{{/if}}
+      {{#if isNumber}}<input type="number" step="{{step}}" {{#if hasMin}}min="{{min}}"{{/if}} {{#if hasMax}}max="{{max}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if refresh}}data-complex-refresh{{/if}} value="{{value}}">{{/if}}
+      {{#if isText}}<input type="text" {{#if isReference}}list="{{referenceList}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if refresh}}data-complex-refresh{{/if}} value="{{value}}" {{#if readOnly}}readonly{{/if}}>{{/if}}
+    {{/if}}
+    {{#if isReference}}<datalist id="{{referenceList}}">{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</datalist><small>목록에서 선택하거나 다른 문서의 참조 값을 입력합니다.</small>{{/if}}
+    {{#if help}}<small>{{help}}</small>{{/if}}
+  </label>
+  {{/if}}
+{{/inline}}
+{{#*inline "activityField"}}
+  {{#if isComplex}}
+  <div class="ncm-workbench__type-field is-json" data-activity-complex-root>
+    <strong>{{label}}</strong>
+    <input type="hidden" {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}} value="{{value}}">
+    {{> activityCompoundNode editor}}
+  </div>
+  {{else}}
+  <label class="ncm-workbench__type-field {{#if isJson}}is-json{{/if}} {{#if isLongText}}is-json{{/if}}">
+    <span>{{label}}</span>
+    {{#if hasChoices}}
+    <select {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}}>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    {{else}}
+      {{#if isBoolean}}<input type="checkbox" {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}} {{#if value}}checked{{/if}}>{{/if}}
+      {{#if isNumber}}<input type="number" step="{{step}}" {{#if hasMin}}min="{{min}}"{{/if}} {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}} value="{{value}}">{{/if}}
+      {{#if isText}}{{#if isLongText}}<textarea rows="3" {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}}>{{value}}</textarea>{{else}}<input type="text" {{#if isReference}}list="{{referenceList}}"{{/if}} {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}} value="{{value}}">{{/if}}{{/if}}
+      {{#if isJson}}<textarea rows="3" {{#if common}}data-activity-common-field data-activity-path="{{path}}"{{else}}data-activity-specific-field data-activity-specific-path="{{path}}"{{/if}}>{{value}}</textarea>{{/if}}
+    {{/if}}
+    {{#if isReference}}<datalist id="{{referenceList}}">{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</datalist>{{/if}}
+  </label>
+  {{/if}}
+{{/inline}}
+{{#*inline "advancementCompoundNode"}}
+  {{#if showLabel}}{{#unless isLeaf}}<strong>{{label}}</strong>{{/unless}}{{/if}}
+  {{#if isNullable}}<button type="button" data-action="toggleAdvancementObject" data-complex-address="{{address}}">{{#if isEnabled}}설정 해제{{else}}설정 사용{{/if}}</button>{{/if}}
+  {{#if isMapping}}
+  <div class="ncm-workbench__compound-list">
+    {{#each children}}
+    <div class="ncm-workbench__compound-row">
+      <div class="ncm-workbench__compound-row-header"><strong>{{mapKey}}</strong><button type="button" data-action="removeAdvancementMapping" data-complex-address="{{mapAddress}}" data-complex-key="{{mapKey}}">배정 삭제</button></div>
+      {{> advancementCompoundNode this}}
+    </div>
+    {{else}}<p class="ncm-workbench__muted">등록된 배정이 없습니다.</p>{{/each}}
+    <div class="ncm-workbench__compound-row-header">
+      {{#if hasKeyOptions}}<select data-complex-new-key>{{#each keyOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select>{{else}}<input type="text" data-complex-new-key placeholder="{{keyPlaceholder}}">{{/if}}
+      <button type="button" data-action="addAdvancementMapping" data-complex-address="{{address}}">배정 추가</button>
+    </div>
+  </div>
+  {{/if}}
+  {{#if isList}}
+  <div class="ncm-workbench__compound-list">
+    {{#each rows}}
+    <div class="ncm-workbench__compound-row">
+      <div class="ncm-workbench__compound-row-header"><strong>항목 {{ordinal}}</strong><button type="button" data-action="removeAdvancementEntry" data-complex-list-address="{{address}}" data-complex-index="{{index}}"><i class="fa-solid fa-trash"></i> 삭제</button></div>
+      {{> advancementCompoundNode node}}
+    </div>
+    {{else}}<p class="ncm-workbench__muted">등록된 항목이 없습니다.</p>{{/each}}
+    <button type="button" data-action="addAdvancementEntry" data-complex-list-address="{{address}}"><i class="fa-solid fa-plus"></i> 항목 추가</button>
+  </div>
+  {{/if}}
+  {{#if isObject}}
+  <div class="ncm-workbench__compound-grid">
+    {{#each children}}{{> advancementCompoundNode this}}{{/each}}
+  </div>
+  {{/if}}
+  {{#if isLeaf}}
+  <label class="ncm-workbench__type-field">
+    <span>{{label}}</span>
+    {{#if hasChoices}}
+    <select data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    {{else}}
+      {{#if isBoolean}}<input type="checkbox" data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if value}}checked{{/if}}>{{/if}}
+      {{#if isNumber}}<input type="number" step="{{step}}" {{#if hasMin}}min="{{min}}"{{/if}} {{#if hasMax}}max="{{max}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" value="{{value}}">{{/if}}
+      {{#if isText}}<input type="text" {{#if isReference}}list="{{referenceList}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" value="{{value}}" {{#if readOnly}}readonly{{/if}}>{{/if}}
+    {{/if}}
+    {{#if isReference}}<datalist id="{{referenceList}}">{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</datalist><small>목록에서 선택하거나 다른 문서의 참조 값을 입력합니다.</small>{{/if}}
+    {{#if help}}<small>{{help}}</small>{{/if}}
+  </label>
+  {{/if}}
+{{/inline}}
+{{#*inline "typeCompoundNode"}}
+  {{#if isList}}
+  <div class="ncm-workbench__compound-list">
+    {{#each rows}}
+    <div class="ncm-workbench__compound-row">
+      <div class="ncm-workbench__compound-row-header"><strong>항목 {{ordinal}}</strong><button type="button" data-action="removeTypeEntry" data-complex-list-address="{{address}}" data-complex-index="{{index}}"><i class="fa-solid fa-trash"></i> 삭제</button></div>
+      {{> typeCompoundNode node}}
+    </div>
+    {{else}}<p class="ncm-workbench__muted">등록된 항목이 없습니다.</p>{{/each}}
+    <button type="button" data-action="addTypeEntry" data-complex-list-address="{{address}}"><i class="fa-solid fa-plus"></i> 항목 추가</button>
+  </div>
+  {{/if}}
+  {{#if isObject}}
+  <div class="ncm-workbench__compound-grid">
+    {{#each children}}{{> typeCompoundNode this}}{{/each}}
+  </div>
+  {{/if}}
+  {{#if isLeaf}}
+  <label class="ncm-workbench__type-field">
+    <span>{{label}}</span>
+    {{#if hasChoices}}
+    <select data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    {{else}}
+      {{#if isBoolean}}<input type="checkbox" data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" {{#if value}}checked{{/if}}>{{/if}}
+      {{#if isNumber}}<input type="number" step="{{step}}" {{#if hasMin}}min="{{min}}"{{/if}} {{#if hasMax}}max="{{max}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" value="{{value}}">{{/if}}
+      {{#if isText}}<input type="text" {{#if isReference}}list="{{referenceList}}"{{/if}} data-complex-control data-complex-address="{{address}}" data-complex-kind="{{kind}}" data-complex-baseline="{{baseline}}" value="{{value}}" {{#if readOnly}}readonly{{/if}}>{{/if}}
+    {{/if}}
+    {{#if isReference}}<datalist id="{{referenceList}}">{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</datalist><small>목록에서 선택하거나 다른 문서의 참조 값을 입력합니다.</small>{{/if}}
+  </label>
+  {{/if}}
+{{/inline}}
+<div class="ncm-workbench__layout">
+  <section class="ncm-workbench__editor">
+    {{#if selected}}
+    <header class="ncm-workbench__item-header">
+      <img src="{{selected.img}}" alt="" class="ncm-workbench__item-icon">
+      <div>
+        <div class="ncm-workbench__eyebrow">아이템 편집기 · {{selected.typeLabel}}</div>
+        <h2>{{selected.name}}</h2>
+      </div>
+      <div class="ncm-workbench__header-actions">
+        {{#if isEmbeddedItem}}<button type="button" data-action="returnToActor"><i class="fa-solid fa-user"></i> 액터로 돌아가기</button>{{/if}}
+        {{#if isEmbeddedItem}}<span class="ncm-workbench__muted">권한: 소유 액터에서 상속</span>{{else}}{{#if packTarget}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{else}}<button type="button" data-action="editOwnership">사용자 권한</button>{{/if}}{{/if}}
+        <button type="button" data-action="expandAllSections" title="전체 펼치기"><i class="fa-solid fa-angles-down"></i> 전체 펼치기</button>
+        <button type="button" data-action="collapseAllSections" title="전체 접기"><i class="fa-solid fa-angles-up"></i> 전체 접기</button>
+        <button type="button" data-action="openAdvanced" class="ncm-workbench__advanced"><i class="fa-solid fa-arrow-up-right-from-square"></i> 전체 아이템 설정</button>
+      </div>
+    </header>
+
+    <div class="ncm-workbench__scroll">
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="basic" open>
+        <summary><strong>기본 정보</strong></summary>
+
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="basic.identity" open>
+          <summary><strong>식별 정보</strong></summary>
+          <div class="ncm-workbench__grid-2">
+            <label>이름<input type="text" name="itemName" value="{{selected.name}}"></label>
+            <label>아이콘 경로<input type="text" name="itemImg" value="{{selected.img}}"><button type="button" data-action="pickItemImage">이미지 선택</button></label>
+            <label>식별자<input type="text" name="identifier" value="{{selected.identifier}}"></label>
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="basic.source" open>
+          <summary><strong>출처</strong></summary>
+          <div class="ncm-workbench__grid-4">
+            <label>출처 책<input type="text" name="sourceBook" value="{{selected.source.book}}"></label>
+            <label>출처 페이지<input type="text" name="sourcePage" value="{{selected.source.page}}"></label>
+            <label>사용자 출처<input type="text" name="sourceCustom" value="{{selected.source.custom}}"></label>
+            <label>라이선스<input type="text" name="sourceLicense" value="{{selected.source.license}}"></label>
+            <label>규칙<select name="sourceRules">{{#each selected.sourceRuleOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+            <label>리비전<input type="number" name="sourceRevision" min="1" step="1" value="{{selected.source.revision}}"></label>
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="basic.description" open>
+          <summary><strong>설명</strong></summary>
+          <label>설명<textarea name="description" rows="5">{{selected.description}}</textarea></label>
+        </details>
+
+      </details>
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible ncm-workbench__activity-workspace" data-section-key="activities.workspace" open>
+        <summary><strong>액티비티 작업 영역</strong> <span>생성 · 수정 · 삭제</span></summary>
+
+        {{#if selected.activityWorkspaceNewTypeOptions.length}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="activities.create" open>
+          <summary><strong>새 액티비티</strong></summary>
+          <div class="ncm-workbench__activity-create">
+            <select name="activityWorkspaceNewType">{{#each selected.activityWorkspaceNewTypeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+            <p class="ncm-workbench__muted">유형을 고른 뒤 아래와 같은 작성 폼에서 내용을 입력합니다.</p>
+            <button type="button" data-action="newActivityWorkspace"><i class="fa-solid fa-plus"></i> 새 액티비티 작성</button>
+          </div>
+        </details>
+        {{/if}}
+
+        {{#if selected.activityWorkspace.isCreate}}
+        <section class="ncm-workbench__activity-new-editor">
+          <h3>새 액티비티 작성 · {{selected.activityWorkspace.typeLabel}}</h3>
+          {{> activityEditor @root}}
+        </section>
+        {{/if}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="activities.list" open>
+          <summary><strong>액티비티 목록</strong></summary>
+          <div class="ncm-workbench__activity-list">
+            {{#each selected.activities}}
+            <section class="ncm-workbench__activity-entry {{#if expanded}}is-expanded{{/if}}">
+              <div class="ncm-workbench__activity-row {{#if selected}}is-selected{{/if}}">
+                <button type="button" data-action="selectActivity" data-activity-id="{{id}}" class="ncm-workbench__activity-select" aria-expanded="{{expanded}}" aria-controls="ncm-activity-entry-{{id}}">
+                  <i class="fa-solid {{#if expanded}}fa-chevron-down{{else}}fa-chevron-right{{/if}}" aria-hidden="true"></i>
+                  <span>{{#if name}}{{name}}{{else}}(기본 액티비티){{/if}}</span><small>{{typeLabel}}</small>
+                </button>
+                <button type="button" class="icon" data-action="moveActivity" data-activity-id="{{id}}" data-direction="-1" aria-label="{{name}} 위로 이동" {{#unless canMoveUp}}disabled{{/unless}}><i class="fa-solid fa-arrow-up"></i></button>
+                <button type="button" class="icon" data-action="moveActivity" data-activity-id="{{id}}" data-direction="1" aria-label="{{name}} 아래로 이동" {{#unless canMoveDown}}disabled{{/unless}}><i class="fa-solid fa-arrow-down"></i></button>
+              </div>
+              <div id="ncm-activity-entry-{{id}}" {{#unless expanded}}hidden{{/unless}}>
+                {{#if selected}}{{#unless @root.selected.activityWorkspace.isCreate}}{{> activityEditor @root}}{{/unless}}{{/if}}
+              </div>
+            </section>
+            {{else}}<p class="ncm-workbench__muted">액티비티가 없습니다. 위에서 유형을 골라 작성하십시오.</p>{{/each}}
+          </div>
+        </details>
+      </details>
+
+      {{#if selected.hasTypeFields}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible ncm-workbench__type-fields" data-section-key="type" open>
+        <summary><strong>{{selected.typeLabel}} 전용 설정</strong> <span>유형별 설정</span></summary>
+        {{#each selected.typeFieldGroups}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="type.{{key}}" open>
+          <summary><strong>{{label}}</strong></summary>
+          <div class="ncm-workbench__type-field-grid">
+            {{#each fields}}
+            {{> typeField this}}
+            {{/each}}
+          </div>
+        </details>
+        {{/each}}
+      </details>
+      {{/if}}
+
+      {{#if selected.hasProperties}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="properties" open>
+        <summary><strong>속성</strong></summary>
+
+        <div class="ncm-workbench__property-grid">
+          {{#each selected.propertyOptions}}
+          <label class="ncm-workbench__property-option {{#if legacy}}is-legacy{{/if}}">
+            <input type="checkbox" name="properties" value="{{value}}" {{#if selected}}checked{{/if}}>
+            <span>{{label}}</span>{{#if legacy}}<small>기존/확장</small>{{/if}}
+          </label>
+          {{/each}}
+        </div>
+
+      </details>
+      {{/if}}
+
+      {{#if selected.hasEquipAttunement}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="equip" open>
+        <summary><strong>장착 / 조율</strong></summary>
+
+        <div class="ncm-workbench__grid-2">
+          <label class="ncm-workbench__toggle"><input type="checkbox" name="equipped" {{#if selected.equipAttunement.equipped}}checked{{/if}}> 장착됨</label>
+          <label>조율 요구<select name="attunement">{{#each selected.attunementOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          <label class="ncm-workbench__toggle"><input type="checkbox" name="attuned" {{#if selected.equipAttunement.attuned}}checked{{/if}}> 현재 조율됨</label>
+        </div>
+
+      </details>
+      {{/if}}
+
+      {{#if selected.hasInventory}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="inventory" open>
+        <summary><strong>인벤토리 / 경제</strong></summary>
+
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="inventory.stock" open>
+          <summary><strong>수량 / 희귀도</strong></summary>
+          <div class="ncm-workbench__grid-2">
+            <label>수량<input type="number" name="quantity" min="0" step="1" value="{{selected.inventory.quantity}}"></label>
+            <label>희귀도<select name="rarity">{{#each selected.rarityOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="inventory.physical" open>
+          <summary><strong>물리 정보</strong></summary>
+          <div class="ncm-workbench__grid-2">
+            <label>무게<input type="number" name="weightValue" min="0" step="any" value="{{selected.inventory.weight.value}}"></label>
+            <label>무게 단위<select name="weightUnits">{{#each selected.weightUnitOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="inventory.economy" open>
+          <summary><strong>경제 정보</strong></summary>
+          <div class="ncm-workbench__grid-2">
+            <label>가격<input type="number" name="priceValue" min="0" step="any" value="{{selected.inventory.price.value}}"></label>
+            <label>화폐<select name="priceDenomination">{{#each selected.currencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="inventory.container" open>
+          <summary><strong>보관용품</strong></summary>
+          <label>보관용품<select name="containerId">{{#each selected.containerOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+        </details>
+
+      </details>
+      {{/if}}
+
+      {{#if selected.containerManagement}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="container" open>
+        <summary><strong>보관 항목 관리</strong> <span>직접 보관 {{selected.containerManagement.directCount}}종</span></summary>
+        <nav class="ncm-workbench__container-path" aria-label="보관용품 경로">
+          <span>{{#if isEmbeddedItem}}액터 소유 아이템{{else}}{{#if packTarget}}컴펜디움 아이템{{else}}월드 아이템{{/if}}{{/if}}</span>
+          {{#each selected.containerManagement.ancestors}}<span>/</span><button type="button" data-action="openContainerItem" data-item-id="{{id}}">{{name}}</button>{{/each}}
+          <span>/ {{selected.name}}</span>
+        </nav>
+        {{#each selected.containerManagement.warnings}}<p class="ncm-workbench__validation-warning">{{this}}</p>{{/each}}
+        <div class="ncm-workbench__container-stats">
+          <div><small>중첩 포함 수량 / 한도</small><strong>{{selected.containerManagement.count}} / {{selected.containerManagement.countLimit}}</strong></div>
+          <div><small>내용물 무게</small><strong>{{selected.containerManagement.contentsWeight}} {{selected.containerManagement.weightUnits}}</strong></div>
+          <div><small>전체 무게</small><strong>{{selected.containerManagement.totalWeight}} {{selected.containerManagement.weightUnits}}</strong></div>
+          <div><small>무게 한도</small><strong>{{selected.containerManagement.weightLimit}}</strong></div>
+        </div>
+        <p class="ncm-workbench__muted">부피 한도: {{selected.containerManagement.volumeLimit}}{{#if selected.containerManagement.weightless}} · 내용물 무게 제외{{/if}}</p>
+        {{#if selected.containerManagement.overCapacity}}<p class="ncm-workbench__validation-warning">용량 한도를 초과했습니다. 시스템과 동일하게 이동은 허용됩니다.</p>{{/if}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="container.contents" open>
+          <summary><strong>보관 항목</strong></summary>
+          {{#if selected.containerManagement.canEdit}}
+          <div class="ncm-workbench__container-add">
+            <label>넣을 아이템<select data-container-candidate data-workbench-transient><option value="">아이템 선택</option>{{#each selected.containerManagement.candidates}}<option value="{{id}}" data-parent-id="{{parentId}}">{{name}} · {{parentName}}</option>{{/each}}</select></label>
+            <button type="button" data-action="addContainerItem">넣기</button>
+          </div>
+          {{/if}}
+          <div class="ncm-workbench__container-list">
+            {{#each selected.containerManagement.entries}}
+            <div class="ncm-workbench__container-row" data-container-row data-item-id="{{id}}" style="--ncm-container-depth: {{depth}}">
+              <div class="ncm-workbench__container-row-title">
+                {{#if img}}<img src="{{img}}" alt="">{{/if}}
+                <button type="button" data-action="openContainerItem" data-item-id="{{id}}">{{#if isContainer}}<i class="fa-solid fa-box"></i> {{/if}}{{name}}</button>
+                <small>{{typeLabel}} · {{quantity}}개</small>
+              </div>
+              {{#if nested}}<small class="ncm-workbench__muted">중첩: {{parentPath}}</small>{{/if}}
+              {{#if canEdit}}
+              <div class="ncm-workbench__container-row-actions">
+                <label>이동 위치<select data-container-destination data-workbench-transient>{{#each destinations}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+                <button type="button" data-action="moveContainerItem" data-item-id="{{id}}" data-parent-id="{{parentId}}">이동</button>
+                <button type="button" data-action="removeContainerItem" data-item-id="{{id}}" data-parent-id="{{parentId}}">밖으로 꺼내기</button>
+              </div>
+              {{/if}}
+            </div>
+            {{else}}<p class="ncm-workbench__muted">보관 중인 아이템이 없습니다.</p>{{/each}}
+          </div>
+        </details>
+        {{#each selected.containerFieldGroups}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="container.{{key}}">
+          <summary><strong>{{label}}</strong></summary>
+          <div class="ncm-workbench__type-field-grid">{{#each fields}}{{> typeField this}}{{/each}}</div>
+        </details>
+        {{/each}}
+      </details>
+      {{/if}}
+
+      {{#if selected.hasIdentification}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="identification" open>
+        <summary><strong>식별 정보</strong></summary>
+
+        <label class="ncm-workbench__toggle"><input type="checkbox" name="identified" {{#if selected.identification.identified}}checked{{/if}}> 식별됨</label>
+        <div class="ncm-workbench__grid-2">
+          <label>미식별 이름<input type="text" name="unidentifiedName" value="{{selected.identification.name}}"></label>
+          <label>미식별 설명<textarea name="unidentifiedDescription" rows="3">{{selected.identification.description}}</textarea></label>
+        </div>
+
+      </details>
+      {{/if}}
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="quick-effects" open>
+        <summary><strong>입력 단축</strong> <span>효과 빠른 추가</span></summary>
+        <p class="ncm-workbench__muted">액티비티 작업 영역으로 값을 직접 작성하기 전에 자주 쓰는 효과를 빠르게 시작할 수 있습니다.</p>
+        <div class="ncm-workbench__quick-grid">
+          <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="quick-effects.damage" open>
+            <summary><strong>추가 피해</strong></summary>
+            <p class="ncm-workbench__quick-help">현재 선택된 공격·피해·내성 액티비티의 사거리와 대상을 그대로 사용하고 피해만 하나 더 붙입니다.</p>
+            {{#if selected.canEditExtraDamage}}
+            <div class="ncm-workbench__grid-2">
+              <label>피해 주사위식<input type="text" name="quickDamageFormula" placeholder="예: 2d6 + 3"></label>
+              <label>피해 유형<select name="quickDamageType">{{#each selected.quickDamageTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+            </div>
+            <button type="button" data-action="addQuickDamage"><i class="fa-solid fa-plus"></i> 추가 피해 적용</button>
+            {{else}}<p class="ncm-workbench__muted">추가 피해를 적용할 공격·피해·내성 액티비티를 먼저 선택하십시오.</p>{{/if}}
+          </details>
+
+          <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="quick-effects.heal" open>
+            <summary><strong>회복 효과</strong></summary>
+            <p class="ncm-workbench__quick-help">새 회복 액티비티를 만듭니다. 보통 사거리·대상·범위·회복 주사위만 정하면 됩니다.</p>
+            <div class="ncm-workbench__grid-2">
+              <label>이름<input type="text" name="quickHealName" value="회복 효과"></label>
+              <label>회복 주사위식<input type="text" name="quickHealFormula" placeholder="예: 2d8 + 3"></label>
+              <label>회복 종류<select name="quickHealType">{{#each selected.quickHealingTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>사거리 방식<select name="quickHealRangeType">{{#each selected.quickRangeTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>사거리<input type="text" name="quickHealRangeValue" placeholder="예: 60"></label>
+              <label>특수 사거리<input type="text" name="quickHealRangeSpecial" placeholder="특수일 때만 입력"></label>
+              <label>대상<select name="quickHealTargetType">{{#each selected.quickTargetTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>대상 수<input type="text" name="quickHealTargetCount" placeholder="예: 1"></label>
+              <label>범위<select name="quickHealAreaType">{{#each selected.quickAreaTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>범위 크기<input type="text" name="quickHealAreaSize" placeholder="예: 10"></label>
+            </div>
+            <button type="button" data-action="createQuickActivity" data-purpose="heal"><i class="fa-solid fa-plus"></i> 회복 액티비티 추가</button>
+          </details>
+
+          <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="quick-effects.save" open>
+            <summary><strong>내성 공격</strong></summary>
+            <p class="ncm-workbench__quick-help">Midi-QOL 내성 공격에 자주 필요한 사거리·대상·범위·피해·내성 난이도·성공 시 처리만 입력합니다.</p>
+            <div class="ncm-workbench__grid-2">
+              <label>이름<input type="text" name="quickSaveName" value="내성 공격"></label>
+              <label>피해 주사위식<input type="text" name="quickSaveFormula" placeholder="예: 7d6"></label>
+              <label>피해 유형<select name="quickSaveDamageType">{{#each selected.quickDamageTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>내성 능력치<select name="quickSaveAbility">{{#each selected.quickAbilityOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>내성 난이도<input type="text" name="quickSaveDc" placeholder="예: 17"></label>
+              <label>내성 성공 시<select name="quickSaveOnSave">{{#each selected.quickOnSaveOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>사거리 방식<select name="quickSaveRangeType">{{#each selected.quickRangeTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>사거리<input type="text" name="quickSaveRangeValue" placeholder="예: 150"></label>
+              <label>특수 사거리<input type="text" name="quickSaveRangeSpecial" placeholder="특수일 때만 입력"></label>
+              <label>대상<select name="quickSaveTargetType">{{#each selected.quickTargetTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>대상 수<input type="text" name="quickSaveTargetCount" placeholder="비우면 범위 내 대상"></label>
+              <label>범위<select name="quickSaveAreaType">{{#each selected.quickAreaTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>범위 크기<input type="text" name="quickSaveAreaSize" placeholder="예: 15"></label>
+            </div>
+            <button type="button" data-action="createQuickActivity" data-purpose="save"><i class="fa-solid fa-plus"></i> 내성 액티비티 추가</button>
+          </details>
+
+          <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="quick-effects.status" open>
+            <summary><strong>상태 효과</strong></summary>
+            <p class="ncm-workbench__quick-help">선택한 액티비티가 적중하거나 적용될 때 줄 상태 효과를 만듭니다.</p>
+            <div class="ncm-workbench__grid-2">
+              <label>효과 이름<input type="text" name="quickStatusName" placeholder="비우면 상태 이름 사용"></label>
+              <label>상태<select name="quickStatus">{{#each statusOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+              <label>지속 라운드<input type="number" name="quickStatusRounds" min="0" step="1" value="1"></label>
+            </div>
+            <button type="button" data-action="addQuickStatus"><i class="fa-solid fa-plus"></i> 상태 효과 추가</button>
+          </details>
+        </div>
+      </details>
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible ncm-workbench__guide" data-section-key="activity-guide" open>
+        <summary><strong>사용 가이드</strong></summary>
+        <div class="ncm-workbench__guide-grid">
+          <div><strong>추가 피해</strong><p>이미 있는 공격에 화염 2d6 같은 피해만 더할 때 사용합니다. 사거리와 대상은 기존 액티비티를 그대로 사용합니다.</p></div>
+          <div><strong>회복 효과</strong><p>새로운 치유 또는 임시 체력 회복 행동을 만들 때 사용합니다.</p></div>
+          <div><strong>내성 공격</strong><p>민첩 내성 난이도 17, 실패 시 7d6 화염처럼 내성 굴림으로 처리하는 공격을 만들 때 사용합니다.</p></div>
+          <div><strong>상태 효과</strong><p>중독·넘어짐 등 상태를 선택 액티비티에 연결할 때 사용합니다.</p></div>
+        </div>
+        <p class="ncm-workbench__advanced-note"><i class="fa-solid fa-circle-info"></i> 고급 액티비티 설정은 D&D5e/Midi-QOL의 특수 필드나 드문 자동화가 필요할 때만 사용하십시오. 일반적인 추가 작업에는 필요하지 않습니다.</p>
+      </details>
+
+      {{#if selected.hasAdvancementSystem}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="advancement" open>
+        <summary><strong>성장</strong></summary>
+        {{#if selected.advancementTypeOptions.length}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="advancement.create" open>
+          <summary><strong>성장 항목 생성</strong></summary>
+          <div class="ncm-workbench__activity-create">
+            <select name="newAdvancementType">{{#each selected.advancementTypeOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select>
+            <input type="text" name="newAdvancementTitle" placeholder="새 성장 제목 (선택)">
+            <button type="button" data-action="createAdvancement"><i class="fa-solid fa-plus"></i> 생성</button>
+          </div>
+        </details>
+        {{/if}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="advancement.list" open>
+          <summary><strong>성장 항목 목록</strong></summary>
+          <div class="ncm-workbench__activity-list">
+            {{#each selected.advancements}}
+            <button type="button" data-action="selectAdvancement" data-advancement-id="{{id}}" class="ncm-workbench__activity-select {{#if selected}}is-selected{{/if}}">
+              {{#if icon}}<img src="{{icon}}" alt="">{{/if}}<span>{{title}}<small>{{typeLabel}}{{#if level}} · 레벨 {{level}}{{/if}}</small></span>
+            </button>
+            {{else}}<p class="ncm-workbench__muted">성장 항목이 없습니다.</p>{{/each}}
+          </div>
+        </details>
+        {{#if selected.selectedAdvancement}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="advancement.manage" open>
+          <summary><strong>선택 성장 항목 관리</strong></summary>
+          <div class="ncm-workbench__activity-manage">
+            <button type="button" data-action="duplicateAdvancement"><i class="fa-regular fa-copy"></i> 복제</button>
+            <button type="button" data-action="openAdvancementAdvanced"><i class="fa-solid fa-up-right-from-square"></i> 전체 성장 설정</button>
+            <button type="button" data-action="deleteAdvancement" class="danger"><i class="fa-solid fa-trash"></i> 삭제</button>
+          </div>
+        </details>
+        {{#each selected.advancementFieldGroups}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="advancement.{{key}}" open>
+          <summary><strong>{{label}}</strong></summary>
+          <div class="ncm-workbench__type-field-grid">
+            {{#each fields}}
+            {{#if isComplex}}
+            <div class="ncm-workbench__type-field is-json" data-advancement-complex-root>
+              <strong>{{label}}</strong>
+              <input type="hidden" data-advancement-field data-advancement-path="{{path}}" value="{{value}}">
+              {{> advancementCompoundNode editor}}
+            </div>
+            {{else}}
+            <label class="ncm-workbench__type-field {{#if isJson}}is-json{{/if}} {{#if isLongText}}is-json{{/if}}">
+              <span>{{label}}</span>
+              {{#if hasChoices}}
+              <select data-advancement-field data-advancement-path="{{path}}">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+              {{else}}
+                {{#if isBoolean}}<input type="checkbox" data-advancement-field data-advancement-path="{{path}}" {{#if value}}checked{{/if}}>{{/if}}
+                {{#if isNumber}}<input type="number" step="{{step}}" {{#if hasMin}}min="{{min}}"{{/if}} data-advancement-field data-advancement-path="{{path}}" value="{{value}}">{{/if}}
+                {{#if isText}}{{#if isLongText}}<textarea rows="3" data-advancement-field data-advancement-path="{{path}}">{{value}}</textarea>{{else}}<input type="text" {{#if isReference}}list="{{referenceList}}"{{/if}} data-advancement-field data-advancement-path="{{path}}" value="{{value}}">{{/if}}{{/if}}
+                {{#if isJson}}<textarea rows="3" data-advancement-field data-advancement-path="{{path}}">{{value}}</textarea>{{/if}}
+              {{/if}}
+              {{#if isReference}}<datalist id="{{referenceList}}">{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</datalist><small>아이템 참조를 선택하거나 입력합니다.</small>{{/if}}
+            </label>
+            {{/if}}
+            {{/each}}
+          </div>
+        </details>
+        {{/each}}
+        {{/if}}
+      </details>
+      {{/if}}
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="damage" open>
+        <summary><strong>피해</strong></summary>
+
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="damage.base" open>
+          <summary><strong>기본 피해</strong></summary>
+          {{#if selected.hasBaseDamage}}
+          <div class="ncm-workbench__damage-base">
+            <label>기본 피해식<input type="text" name="baseDamageFormula" value="{{selected.baseDamageFormula}}" placeholder="1d8 + 3"></label>
+            <div class="ncm-workbench__damage-types" data-base-damage-types>
+              <strong>기본 피해 유형</strong>
+              <div class="ncm-workbench__damage-type-grid">
+                {{#each selected.baseDamageTypes}}
+                <button type="button" class="ncm-workbench__damage-type-option" data-action="toggleDamageType" data-base-damage-type data-damage-type="{{value}}" aria-pressed="{{#if selected}}true{{else}}false{{/if}}">
+                  <span class="ncm-workbench__check-icon" aria-hidden="true">
+                    <svg class="ncm-workbench__check-icon--off" data-lucide-icon="square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                    <svg class="ncm-workbench__check-icon--on" data-lucide-icon="square-check-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1 2-2V5a2 2 0 0 1 2-2h12.344"/><path d="m9 11 3 3L22 4"/></svg>
+                  </span>
+                  {{#if icon}}<dnd5e-icon src="{{icon}}"></dnd5e-icon>{{else}}<i class="fa-solid fa-burst"></i>{{/if}}
+                  <span class="ncm-workbench__damage-type-label">{{label}}</span>
+                </button>
+                {{/each}}
+              </div>
+            </div>
+          </div>
+          {{else}}<p class="ncm-workbench__muted">이 아이템 유형에는 기본 피해 필드가 없습니다.</p>{{/if}}
+        </details>
+
+        {{#if selected.canEditExtraDamage}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="damage.extra" open>
+          <summary><strong>추가 피해</strong></summary>
+          <div class="ncm-workbench__section-title"><button type="button" data-action="addExtraDamage"><i class="fa-solid fa-plus"></i> 추가</button></div>
+          <div class="ncm-workbench__damage-list">
+          {{#each selected.extraDamageRows}}
+          <div class="ncm-workbench__damage-row" data-extra-damage-row>
+            <input type="text" value="{{formula}}" data-extra-damage-formula placeholder="1d6">
+            <button type="button" data-action="removeExtraDamage" data-index="{{index}}" class="icon"><i class="fa-solid fa-trash"></i></button>
+            <div class="ncm-workbench__damage-type-grid ncm-workbench__damage-type-grid--compact" data-extra-damage-types>
+              {{#each damageTypes}}
+              <button type="button" class="ncm-workbench__damage-type-option" data-action="toggleDamageType" data-extra-damage-type data-damage-type="{{value}}" aria-pressed="{{#if selected}}true{{else}}false{{/if}}">
+                <span class="ncm-workbench__check-icon" aria-hidden="true">
+                  <svg class="ncm-workbench__check-icon--off" data-lucide-icon="square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                  <svg class="ncm-workbench__check-icon--on" data-lucide-icon="square-check-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344"/><path d="m9 11 3 3L22 4"/></svg>
+                </span>
+                {{#if icon}}<dnd5e-icon src="{{icon}}"></dnd5e-icon>{{else}}<i class="fa-solid fa-burst"></i>{{/if}}
+                <span class="ncm-workbench__damage-type-label">{{label}}</span>
+              </button>
+              {{/each}}
+            </div>
+          </div>
+          {{else}}<p class="ncm-workbench__muted">추가 피해가 없습니다.</p>{{/each}}
+          </div>
+        </details>
+        {{/if}}
+
+      </details>
+
+      {{#if selected.hasUses}}
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="uses" open>
+        <summary><strong>사용 횟수 / 회복</strong></summary>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="uses.pool" open>
+          <summary><strong>사용 횟수</strong></summary>
+          <div class="ncm-workbench__grid-2">
+            <label>소모<input type="number" name="usesSpent" min="0" step="1" value="{{selected.uses.spent}}"></label>
+            <label>최대 수식<input type="text" name="usesMax" value="{{selected.uses.max}}" placeholder="예: 3 또는 @prof"></label>
+          </div>
+          {{#if selected.uses.hasAutoDestroy}}<label class="ncm-workbench__toggle"><input type="checkbox" name="usesAutoDestroy" {{#if selected.uses.autoDestroy}}checked{{/if}}> 사용 횟수 소진 시 자동 삭제</label>{{/if}}
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="uses.recovery" open>
+          <summary><strong>회복 규칙</strong></summary>
+          <div class="ncm-workbench__section-title"><button type="button" data-action="addRecovery"><i class="fa-solid fa-plus"></i> 회복 규칙 추가</button></div>
+          <div class="ncm-workbench__recovery-list">
+          {{#each selected.recoveryRows}}
+          <div class="ncm-workbench__recovery-row" data-recovery-row data-index="{{index}}">
+            <label>주기<select data-recovery-period>{{#each periodOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+            <label data-recovery-type-field>회복 방식<select data-recovery-type>{{#each typeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+            <label data-recovery-formula-field>수식<input type="text" data-recovery-formula value="{{formula}}" placeholder="예: 1d4 또는 5"></label>
+            <button type="button" class="icon" data-action="removeRecovery" data-index="{{index}}" title="회복 규칙 삭제"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          {{else}}<p class="ncm-workbench__muted">회복 규칙이 없습니다.</p>{{/each}}
+          </div>
+        </details>
+
+      </details>
+      {{/if}}
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible ncm-workbench__on-hit" data-section-key="on-hit" open>
+        <summary><strong>명중 시 효과</strong></summary>
+
+        {{#if selected.selectedActivity}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="on-hit.linked" open>
+          <summary><strong>연결된 효과</strong></summary>
+          <div class="ncm-workbench__effect-list">
+            {{#each selected.effects.onHit}}
+            <div class="ncm-workbench__effect-row"><span><i class="fa-solid fa-burst"></i> {{name}}</span><button type="button" data-action="editEffect" data-effect-id="{{id}}">상세 편집</button><button type="button" data-action="detachEffect" data-effect-id="{{id}}">연결 해제</button><button type="button" data-action="deleteOnHitEffect" data-effect-id="{{id}}" class="danger">효과 삭제</button></div>
+            {{else}}<p class="ncm-workbench__muted">현재 액티비티에 연결된 대상 효과가 없습니다.</p>{{/each}}
+          </div>
+        </details>
+        {{#if selected.effects.availableTarget.length}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="on-hit.available" open>
+          <summary><strong>기존 대상 효과 연결</strong></summary>
+          <div class="ncm-workbench__chips">{{#each selected.effects.availableTarget}}<button type="button" data-action="attachEffect" data-effect-id="{{id}}" class="ncm-workbench__chip">{{name}}</button>{{/each}}</div>
+        </details>
+        {{/if}}
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="on-hit.create" open>
+          <summary><strong>새 상태 효과 추가</strong></summary>
+          <div class="ncm-workbench__inline-form">
+            <input type="text" name="onHitName" placeholder="효과 이름 (선택)">
+            <select name="onHitStatus"><option value="">상태 선택</option>{{#each statusOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select>
+            <input type="number" name="onHitRounds" min="0" value="1" title="라운드">
+            <button type="button" data-action="addOnHitStatus"><i class="fa-solid fa-plus"></i> 상태 효과 추가</button>
+          </div>
+        </details>
+        {{else}}<p class="ncm-workbench__muted">명중 시 효과를 사용하려면 액티비티가 필요합니다.</p>{{/if}}
+
+      </details>
+
+      <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="passive" open>
+        <summary><strong>지속 효과</strong></summary>
+
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="effects.all" open>
+          <summary><strong>모든 아이템 효과 관리</strong></summary>
+          <button type="button" data-action="createEffect">빈 효과 추가·편집</button>
+          {{#each managedEffects}}
+          <div class="ncm-workbench__effect-row"><span>{{name}} <small>{{#if transfer}}전이{{else}}대상{{/if}} · {{#if disabled}}비활성{{else}}활성{{/if}}</small></span>
+            <button type="button" data-action="editEffect" data-effect-id="{{id}}">상세 편집</button>
+            <button type="button" data-action="toggleEffect" data-effect-id="{{id}}">{{#if disabled}}활성화{{else}}비활성화{{/if}}</button>
+            <button type="button" data-action="duplicateEffect" data-effect-id="{{id}}">복제</button>
+            <button type="button" data-action="deleteEffect" data-effect-id="{{id}}">삭제</button>
+          </div>
+          {{else}}<p>아이템 효과가 없습니다.</p>{{/each}}
+        </details>
+
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="passive.list" open>
+          <summary><strong>지속 효과 목록</strong></summary>
+          <div class="ncm-workbench__effect-list">
+            {{#each selected.effects.passive}}
+            <div class="ncm-workbench__effect-row"><span><i class="fa-solid fa-shield-halved"></i> {{name}}</span><small>{{#each changes}}{{key}} {{value}}{{/each}}</small></div>
+            {{else}}<p class="ncm-workbench__muted">전이형 지속 효과가 없습니다.</p>{{/each}}
+          </div>
+        </details>
+        <details class="ncm-workbench__subsection ncm-workbench__collapsible" data-section-key="passive.create" open>
+          <summary><strong>새 지속 효과 추가</strong></summary>
+          <div class="ncm-workbench__passive-form">
+            <input type="text" name="passiveName" placeholder="효과 이름">
+            <input type="text" name="passiveKey" placeholder="예: system.attributes.ac.bonus">
+            <select name="passiveMode">{{#each effectModes}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+            <input type="text" name="passiveValue" placeholder="값">
+            <button type="button" data-action="addPassiveEffect"><i class="fa-solid fa-plus"></i> 지속 효과 추가</button>
+          </div>
+        </details>
+
+      </details>
+    </div>
+
+    <footer class="ncm-workbench__footer">
+      <span class="ncm-workbench__muted">입력 보관은 현재 창 안에서 유지됩니다. 브라우저 새로고침 전에는 변경사항을 저장하십시오.</span>
+      <button type="submit" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk"></i> 변경사항 저장</button>
+    </footer>
+    {{else}}
+    {{#if missingTargetDraft}}
+    <div class="ncm-workbench__notice"><h2>삭제된 아이템의 보관 입력</h2>
+      <p>대상이 삭제되어 저장할 수 없습니다. 필요한 값을 복사한 뒤 아이템 전환 시 입력 버리기를 선택하십시오. 브라우저 새로고침 전에는 복사하십시오.</p>
+      {{#each missingTargetDraft}}<label>{{name}}<textarea readonly data-workbench-transient>{{value}}</textarea></label>{{/each}}
+    </div>
+    {{else}}<div class="ncm-workbench__empty"><i class="fa-solid fa-hammer"></i><h2>아이템을 선택하십시오.</h2></div>{{/if}}
+    {{/if}}
+  </section>
+
+  <aside class="ncm-workbench__browser">
+    <header><div>{{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}<div class="ncm-workbench__eyebrow">{{#if isEmbeddedItem}}액터 소유 아이템{{else}}{{#if packTarget}}컴펜디움 아이템{{else}}월드 아이템{{/if}}{{/if}}</div><h2>아이템 탐색기</h2></div><span class="ncm-workbench__count">{{browserItemCount}}</span></header>
+    <nav class="ncm-workbench__folder-nav" aria-label="Item folder path">
+      <button type="button" class="ncm-workbench__folder-up icon" data-action="goParentFolder" {{#unless canGoParent}}disabled{{/unless}} title="상위 폴더"><i class="fa-solid fa-arrow-up"></i></button>
+      <div class="ncm-workbench__breadcrumbs">
+        <button type="button" data-action="goBreadcrumb" data-folder-id="" class="ncm-workbench__breadcrumb {{#unless currentFolder}}is-current{{/unless}}"><i class="fa-solid fa-star"></i> 루트</button>
+        {{#each breadcrumbs}}
+        <span class="ncm-workbench__breadcrumb-separator">/</span>
+        <button type="button" data-action="goBreadcrumb" data-folder-id="{{id}}" class="ncm-workbench__breadcrumb {{#if @last}}is-current{{/if}}">{{name}}</button>
+        {{/each}}
+      </div>
+    </nav>
+    <div class="ncm-workbench__filters">
+      <input type="search" name="browserSearch" placeholder="이름·타입·폴더 검색">
+      <select name="browserType"><option value="">모든 타입</option>{{#each itemTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select>
+    </div>
+    <div class="ncm-workbench__item-list">
+      {{#each folders}}
+      <button type="button" data-action="openFolder" data-folder-id="{{id}}" data-browser-folder data-search="{{searchText}}" class="ncm-workbench__folder-row">
+        <span class="ncm-workbench__folder-icon"><i class="fa-solid fa-folder"></i></span><span class="name">{{name}}</span><i class="fa-solid fa-chevron-right"></i>
+      </button>
+      {{/each}}
+      {{#each items}}
+      <button type="button" data-action="selectItem" data-item-id="{{id}}" data-browser-item data-search="{{searchText}}" data-item-type="{{type}}" class="ncm-workbench__item-row {{#if selected}}is-selected{{/if}}">
+        <img src="{{img}}" alt=""><span class="name">{{name}}<small>{{typeLabel}}</small></span><i class="fa-solid fa-chevron-left"></i>
+      </button>
+      {{/each}}
+      {{#unless folders.length}}{{#unless items.length}}<div class="ncm-workbench__folder-empty">이 폴더는 비어 있습니다.</div>{{/unless}}{{/unless}}
+    </div>
+    {{#if canManageItems}}
+    <footer class="ncm-workbench__browser-actions">
+      {{#unless isEmbeddedItem}}<button type="button" data-action="createFolder"><i class="fa-solid fa-folder-plus"></i> 폴더 생성</button><button type="button" data-action="editFolder">폴더 편집</button><button type="button" data-action="deleteFolder">폴더 삭제</button>{{/unless}}
+      <button type="button" data-action="createItem"><i class="fa-solid fa-plus"></i> 아이템 생성</button>
+      <button type="button" data-action="duplicateItem" {{#unless selected}}disabled{{/unless}}><i class="fa-regular fa-copy"></i> 아이템 복제</button>
+      <button type="button" data-action="deleteItem" {{#unless selected}}disabled{{/unless}}>아이템 삭제</button>
+    </footer>
+    {{/if}}
+  </aside>
+</div>

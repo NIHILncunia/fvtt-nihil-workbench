@@ -1,0 +1,30 @@
+<div class="ncm-document-workbench__layout">
+  <header><h2>{{title}}</h2><p>{{help}}</p></header>
+  <div class="ncm-document-workbench__fields">
+    {{#each fields}}
+    {{#if effectChanges}}
+    <section class="ncm-document-workbench__changes" data-effect-changes><h3>효과 변경값</h3>
+      <p>변경 경로는 예를 들어 system.attributes.ac.bonus를 사용합니다. 여러 변경값을 함께 설정할 수 있습니다.</p>
+      {{#each ../changeRows}}<div data-effect-change>
+        <label>변경 경로<input data-change-key value="{{key}}"></label>
+        <label>적용 방식<select data-change-type>{{#each types}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+        <label>우선순위<input type="number" data-change-priority value="{{priority}}"></label>
+        <button type="button" data-action="removeChange" data-change-index="{{index}}">제거</button>
+        <label>값·공식<textarea rows="3" data-change-value>{{value}}</textarea></label>
+      </div>{{/each}}
+      <button type="button" data-action="addChange">변경값 추가</button>
+    </section>
+    {{else}}
+    <label class="{{#if json}}is-json{{else if multiline}}is-json{{/if}}"><span>{{title}}</span><small>{{path}}</small>
+      {{#if boolean}}<input type="checkbox" data-document-path="{{path}}" {{#if value}}checked{{/if}} {{#unless ../canEdit}}disabled{{/unless}}>
+      {{else if select}}<select data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+      {{else if json}}<textarea rows="6" data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{value}}</textarea>
+      {{else if multiline}}<textarea rows="4" data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{value}}</textarea>
+      {{else}}<input type="{{#if number}}number{{else}}text{{/if}}" data-document-path="{{path}}" value="{{value}}" step="{{#if integer}}1{{else}}any{{/if}}" {{#unless ../canEdit}}disabled{{/unless}}>
+      {{/if}}
+    </label>
+    {{/if}}
+    {{/each}}
+  </div>
+  <footer><button type="submit" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{submitLabel}}</button></footer>
+</div>
