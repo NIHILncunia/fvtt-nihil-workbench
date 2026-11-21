@@ -14,7 +14,7 @@ if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
   process.exit(1);
 }
 
-const run = (command, args) => execFileSync(command, args, { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
+const run = (command, args) => execFileSync(command, args, { cwd: root, stdio: 'inherit' });
 const read = (command, args) => execFileSync(command, args, { cwd: root, encoding: 'utf8' }).trim();
 
 if (read('git', ['status', '--porcelain'])) {
