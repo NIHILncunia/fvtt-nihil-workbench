@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 const MODULE_ID = 'nihil-compendium-module';
 const EDITOR_TYPES = new Set(['Actor', 'Item']);
 const AUTHORS = new Set(['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn']);
@@ -56,7 +57,7 @@ export function requireModulePack(
   }
   if (
     write &&
-    (!AUTHORS.has(globalThis.game?.user?.id) ||
+    (!(AUTHORS.has(globalThis.game?.user?.id) || isWorkbenchUser()) ||
       pack.testUserPermission?.(
         globalThis.game.user,
         'OWNER',

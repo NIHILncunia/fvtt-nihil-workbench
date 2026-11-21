@@ -107,11 +107,12 @@ export function previewActorCombatCards(
   );
   let preview = actor;
   if (Object.keys(update).length) {
+    // 복제본은 생성될 때 이미 데이터를 준비한다. 다시 prepareData()를 부르면 dnd5e 6의
+    // 이동 속도 호환 처리(MovementField._shim)가 같은 객체에 두 번 걸려 실패한다(v14 회귀 확인에서 발견).
     preview = actor.clone(
       update,
       { keepId: true, save: false },
     );
-    preview.prepareData?.();
   }
   return {
     abilities: actorAbilityCards(preview),

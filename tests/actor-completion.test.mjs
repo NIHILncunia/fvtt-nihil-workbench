@@ -119,9 +119,10 @@ test(
       cloned,
       [{ update: { 'system.abilities.str.value': 22 }, options: { keepId: true, save: false } }],
     );
+    // v14·dnd5e 6: 복제본은 생성 때 준비되므로 다시 prepareData()를 부르지 않는다.
     assert.equal(
       prepared,
-      true,
+      false,
     );
     assert.equal(
       cards[0].modifier,
@@ -227,9 +228,10 @@ test(
         options: { keepId: true, save: false },
       },
     );
+    // v14·dnd5e 6: 복제본은 생성 때 준비되므로 다시 prepareData()를 부르지 않는다.
     assert.equal(
       prepared,
-      true,
+      false,
     );
     assert.equal(
       cards.abilities[0].modifier,

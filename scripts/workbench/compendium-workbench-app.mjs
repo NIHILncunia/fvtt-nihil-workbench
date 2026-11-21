@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
   createPackDocument,
   modulePackChoices,
@@ -380,7 +381,7 @@ export function getCompendiumWorkbenchClass() {
 }
 
 export function openCompendiumWorkbench() {
-  if (!AUTHORS.has(globalThis.game?.user?.id)) return null;
+  if (!AUTHORS.has(globalThis.game?.user?.id) && !isWorkbenchUser()) return null;
   const Class = getCompendiumWorkbenchClass();
   if (!workbench || workbench.state === Class.RENDER_STATES?.CLOSED)
     workbench = new Class();

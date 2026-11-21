@@ -1,3 +1,4 @@
+import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
   isActorWorkbenchOpen,
   toggleActorWorkbench,
@@ -12,7 +13,7 @@ export function openWorkbenchLauncher() {
   if (
     !['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn'].includes(
       globalThis.game?.user?.id,
-    )
+    ) && !isWorkbenchUser()
   )
     return null;
   if (!LauncherClass) {
@@ -103,7 +104,7 @@ export function injectSettingsWorkbenchButton(html) {
   if (
     !['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn'].includes(
       globalThis.game?.user?.id,
-    )
+    ) && !isWorkbenchUser()
   )
     return false;
   const root = html?.querySelector ? html : html?.[0];
