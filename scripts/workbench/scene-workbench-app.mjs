@@ -70,7 +70,7 @@ export function getSceneWorkbenchClass() {
     selectSceneById(sceneId) {
       const scene = sceneId ? globalThis.game?.scenes?.get?.(sceneId) : null;
       this.sceneId = scene?.id ?? null;
-      this.state = scene ? readSceneState(scene) : emptySceneState();
+      this.draft = scene ? readSceneState(scene) : emptySceneState();
     }
 
     get scene() {
@@ -82,18 +82,18 @@ export function getSceneWorkbenchClass() {
       const form = this.element;
       if (!form?.querySelector) return;
       const value = (name) => form.querySelector(`[name="${name}"]`);
-      if (value('sceneName')) this.state.name = value('sceneName').value;
-      if (value('sceneSrc')) this.state.src = value('sceneSrc').value.trim();
-      if (value('sceneColumns')) this.state.columns = Number(value('sceneColumns').value);
-      if (value('sceneLuminosity')) this.state.luminosity = Number(value('sceneLuminosity').value);
-      if (value('sceneDarkness')) this.state.darkness = Number(value('sceneDarkness').value);
-      if (value('sceneGlobalLight')) this.state.globalLight = value('sceneGlobalLight').checked;
+      if (value('sceneName')) this.draft.name = value('sceneName').value;
+      if (value('sceneSrc')) this.draft.src = value('sceneSrc').value.trim();
+      if (value('sceneColumns')) this.draft.columns = Number(value('sceneColumns').value);
+      if (value('sceneLuminosity')) this.draft.luminosity = Number(value('sceneLuminosity').value);
+      if (value('sceneDarkness')) this.draft.darkness = Number(value('sceneDarkness').value);
+      if (value('sceneGlobalLight')) this.draft.globalLight = value('sceneGlobalLight').checked;
       if (value('sceneSearch')) this.search = value('sceneSearch').value;
     }
 
     gridPreview() {
       try {
-        const grid = gridFromColumns(this.state.width, this.state.height, this.state.columns);
+        const grid = gridFromColumns(this.draft.width, this.draft.height, this.draft.columns);
         return { ok: true, text: `한 칸 ${grid.size}px · 세로 약 ${grid.rows}칸${grid.exact ? '' : ' (끝 칸이 조금 잘림)'}` };
       } catch (error) {
         return { ok: false, text: error.message };
@@ -108,13 +108,13 @@ export function getSceneWorkbenchClass() {
       return {
         canEdit: canUseSceneWorkbench(),
         isNew: !this.sceneId,
-        state: this.state,
+        state: this.draft,
         scenes,
         search: this.search,
         grid: this.gridPreview(),
-        sizeText: this.state.width && this.state.height ? `${this.state.width}×${this.state.height}px` : '크기 미확인',
-        luminosityText: Number(this.state.luminosity ?? 0).toFixed(2),
-        darknessText: Number(this.state.darkness ?? 0).toFixed(2),
+        sizeText: this.draft.width && this.draft.height ? `${this.draft.width}×${this.draft.height}px` : '크기 미확인',
+        luminosityText: Number(this.draft.luminosity ?? 0).toFixed(2),
+        darknessText: Number(this.draft.darkness ?? 0).toFixed(2),
         backgroundColor: SCENE_BACKGROUND_COLOR,
         colorFixedNote: level && level.backgroundColor && level.backgroundColor !== SCENE_BACKGROUND_COLOR
           ? `지금 배경색 ${level.backgroundColor} → 저장하면 검은색으로 바뀝니다.` : null,
@@ -155,14 +155,14 @@ export function getSceneWorkbenchClass() {
 
     async applyBackground(src, entry) {
       this.capture();
-      this.state.src = src;
+      this.draft.src = src;
       let size = entry?.width && entry?.height ? { width: entry.width, height: entry.height } : null;
       if (!size && src) size = await measureImage(src);
-      this.state.width = size?.width ?? null;
-      this.state.height = size?.height ?? null;
-      if (!this.state.name && entry) this.state.name = sceneNameFromEntry(entry);
+      this.draft.width = size?.width ?? null;
+      this.draft.height = size?.height ?? null;
+      if (!this.draft.name && entry) this.draft.name = sceneNameFromEntry(entry);
       // 새로 고른 그림이면 기존 씬에서 가장 흔한 50px 격자를 기준으로 칸 수를 먼저 채운다.
-      if (size && (!this.state.columns || !this.sceneId)) this.state.columns = Math.max(1, Math.round(size.width / COMMON_GRID_SIZE));
+      if (size && (!this.draft.columns || !this.sceneId)) this.draft.columns = Math.max(1, Math.round(size.width / COMMON_GRID_SIZE));
       await this.render({ force: true });
     }
 
@@ -184,13 +184,13 @@ export function getSceneWorkbenchClass() {
       this.capture();
       galleryOpener({
         kind: 'map',
-        current: this.state.src,
-        targetLabel: `${this.state.name || '새 씬'} · 배경 이미지`,
+        current: this.draft.src,
+        targetLabel: `${this.draft.name || '새 씬'} · 배경 이미지`,
         onSelect: (url, entry) => this.applyBackground(url, entry),
         onPickLocal: async () => {
           const FilePicker = globalThis.CONFIG?.ux?.FilePicker ?? globalThis.foundry?.applications?.apps?.FilePicker;
           if (!FilePicker) return;
-          await new FilePicker({ type: 'image', current: this.state.src, callback: (path) => this.applyBackground(path, null) }).browse();
+          await new FilePicker({ type: 'image', current: this.draft.src, callback: (path) => this.applyBackground(path, null) }).browse();
         },
       });
     }
@@ -223,14 +223,14 @@ export function getSceneWorkbenchClass() {
       try {
         let scene = this.scene;
         if (!scene) {
-          scene = await globalThis.CONFIG.Scene.documentClass.create(sceneCreateData(this.state));
+          scene = await globalThis.CONFIG.Scene.documentClass.create(sceneCreateData(this.draft));
           if (!scene) throw new Error('씬을 만들지 못했습니다.');
         } else {
-          await scene.update(sceneUpdateData(this.state));
+          await scene.update(sceneUpdateData(this.draft));
         }
         const level = scene.levels?.get?.(scene.initialLevel) ?? scene.levels?.contents?.[0];
         if (!level) throw new Error('씬의 레벨을 찾지 못해 배경을 넣지 못했습니다.');
-        await level.update(sceneLevelUpdate(this.state.src));
+        await level.update(sceneLevelUpdate(this.draft.src));
         this.selectSceneById(scene.id);
         globalThis.ui?.notifications?.info?.(`「${scene.name}」 씬을 저장했습니다.`);
         await this.render({ force: true });
