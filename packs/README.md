@@ -1,6 +1,8 @@
 # 컨펜디움 팩 관리
 
-실제 컨펜디움 데이터베이스는 빈 파일을 수동 생성하지 않고 Foundry VTT 13.351의 Module Maker에서 만듭니다.
+v14 판(2026-11-21~)의 `common-monsters`는 Foundry 14.370·dnd5e 6.1.1 월드에서 코어 이관(`pack.migrate()`)과 dnd5e 이관(`dnd5e.migrations.migrateCompendium`)을 돌린 문서를 내보내 `tools/rebuild-pack.mjs`로 다시 만들었습니다. 이관 전 v13 데이터베이스는 비공개 원본 저장소에 남아 있습니다.
+
+아래는 v13 판에서 팩을 처음 만든 방법입니다. 실제 컨펜디움 데이터베이스는 빈 파일을 수동 생성하지 않고 Foundry VTT 13.351의 Module Maker에서 만듭니다.
 
 1. 모듈을 Foundry 사용자 데이터의 `Data/modules/nihil-compendium-module`에 둡니다.
 2. D&D5e 5.2.4 월드에서 Module Maker를 열고 이 모듈을 선택합니다.
@@ -16,7 +18,7 @@
 | --- | --- | --- | --- |
 | `common-monsters` | BaseActor | Actor | CR 1~30 일반·엘리트·보스 베이스 액터 90개 |
 
-Actor 팩의 식별자와 데이터 경로는 유지합니다. 기존 `common-feats`, `common-items` 팩은 모듈 등록에서 제외하고 데이터베이스는 보존합니다. 현재 베이스 아이템·베이스 피트 팩은 제공하지 않습니다. 세부 결정은 [콘텐츠 제작 결정 기록](../docs/project-design/2026-10-12-compendium-content-decisions.md)을 따릅니다.
+Actor 팩의 식별자와 데이터 경로는 유지합니다. 기존 `common-feats`, `common-items` 팩은 모듈 등록에서 제외하고 데이터베이스는 보존합니다. 현재 베이스 아이템·베이스 피트 팩은 제공하지 않습니다. 세부 결정은 콘텐츠 제작 결정 기록(비공개 원본 저장소 `docs/project-design/2026-10-12-compendium-content-decisions.md`)을 따릅니다.
 
 ## 초기 설계의 확장 후보
 
