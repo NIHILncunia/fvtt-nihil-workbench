@@ -32,7 +32,6 @@ test('module manifest targets the approved Foundry and D&D5e versions', async ()
     compatibility: {
       minimum: '6.1.0',
       verified: '6.1.1',
-      maximum: '6',
     },
   }]);
   assert.deepEqual(manifest.packs, [
