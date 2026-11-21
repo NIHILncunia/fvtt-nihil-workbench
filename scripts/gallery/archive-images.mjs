@@ -49,16 +49,31 @@ function baseName(path) {
   return name.replace(/\.[^.]+$/, '');
 }
 
+function stripRole(name, role) {
+  return name && role && name.endsWith(` ${role}`) ? name.slice(0, -(role.length + 1)) : name;
+}
+
+// 그림 경로·DB 파일 이름에서 대상 이름을 얻는다. 크리처 그림은 `<폴더>/<종류>.webp`(종류 파일)라
+// 경로의 파일 이름이 종류뿐이면 DB 파일 이름(`<폴더[ 바리에이션]> <종류>.webp`, 2026-11-12 규칙)에서 종류를 떼고,
+// 그것도 없으면 종류 파일 바로 위 폴더 이름을 쓴다. 설정화는 「<폴더 이름> <종류>」 이름이라 종류를 뗀다.
+export function imageSubjectName(item) {
+  const role = String(item?.role ?? '');
+  const stem = baseName(item?.path);
+  if (stem && stem !== role) return stripRole(stem, role);
+  const dbName = stripRole(baseName(item?.fileName), role);
+  if (dbName && dbName !== role) return dbName;
+  const folders = String(item?.path ?? '').split('/');
+  return folders.length > 1 ? folders[folders.length - 2] : (stem || null);
+}
+
 // API 항목 → 갤러리 카드. 올라가지 않았거나(주소 없음) 사용 안 함 표시가 된 그림은 뺀다.
+// 크리처와 연결되지 않은 캐릭터 그림(정체 미상 NPC 기본 포트 등)은 폴더 이름을 카드 이름으로 쓴다(2026-11-21).
 export function galleryEntry(item, source) {
   if (!item?.url || item.use === 'N') return null;
   const creature = item.creature ?? null;
   const fileName = baseName(item.path);
-  // 설정화는 「<폴더 이름> <종류>」 이름이라 종류를 떼어 물건 이름만 보인다.
-  const settingName = source.area === 'concept' && fileName && item.role && fileName.endsWith(` ${item.role}`)
-    ? fileName.slice(0, -(item.role.length + 1))
-    : fileName;
-  const name = creature?.name ?? settingName ?? item.fileName ?? item.imageId;
+  const subjectName = source.area === 'char' || source.area === 'concept' ? imageSubjectName(item) : fileName;
+  const name = creature?.name || subjectName || item.fileName || item.imageId;
   const group = source.area === 'char'
     ? (creature?.classification || '분류 없음')
     : source.area === 'concept'
@@ -90,6 +105,16 @@ export function filterEntries(entries, { source = null, search = '', group = '' 
     (!source || entry.source === source)
     && (!group || entry.group === group)
     && words.every((word) => entry.search.includes(word)));
+}
+
+// 카드는 이름순(숫자는 수 크기대로, 숫자가 한글보다 앞)으로 놓는다. 「000 정체 미상」 기본 포트가
+// 초상화·토큰 전체 보기의 맨 앞에 오게 하려는 2026-11-21 마스터 결정이다. 이름이 같으면 경로순을 유지한다.
+const nameCollator = new Intl.Collator('ko', { numeric: true });
+export function sortEntries(entries) {
+  return entries
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => nameCollator.compare(a.entry.name, b.entry.name) || a.index - b.index)
+    .map(({ entry }) => entry);
 }
 
 export function entryGroups(entries) {
@@ -177,7 +202,7 @@ export async function loadGalleryEntries(kind, { force = false, token = readImag
   if (!force && cached && now - cached.at < CACHE_MS && cached.token === token) return cached.entries;
   const config = galleryKind(kind);
   const lists = await Promise.all(config.sources.map((source) => fetchSource(source, token, fetcher)));
-  const entries = lists.flat();
+  const entries = sortEntries(lists.flat());
   cache.set(kind, { at: now, token, entries });
   return entries;
 }

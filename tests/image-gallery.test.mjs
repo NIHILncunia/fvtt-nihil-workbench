@@ -10,7 +10,9 @@ import {
   galleryEntry,
   galleryKind,
   imageQuery,
+  imageSubjectName,
   loadGalleryEntries,
+  sortEntries,
 } from '../scripts/gallery/archive-images.mjs';
 
 const portraitItem = {
@@ -109,4 +111,33 @@ test('item workbench image button opens the item icon gallery instead of the fil
   const action = source.slice(source.indexOf('static async _pickItemImageAction'), source.indexOf('static async _deleteItemAction'));
   assert.match(action, /kind: 'item'/);
   assert.match(action, /onPickLocal: pickLocal/);
+});
+
+test('creature images without a creature record are named by their folder', () => {
+  const source = galleryKind('portrait').sources[0];
+  const unknown = {
+    imageId: '900', path: 'wiki/trpg/creatures/NPCs/000 정체 미상/초상화.webp', fileName: '000 정체 미상 초상화.webp',
+    role: '초상화', url: 'https://x/unknown.webp', use: 'Y', creature: null,
+  };
+  const entry = galleryEntry(unknown, source);
+  assert.equal(entry.name, '000 정체 미상');
+  assert.equal(entry.group, '분류 없음');
+  assert.equal(imageSubjectName({ ...unknown, fileName: null }), '000 정체 미상', 'falls back to the parent folder');
+  assert.equal(imageSubjectName({ path: 'wiki/trpg/creatures/a/아칼라베인/드래곤폼/토큰.webp', fileName: '아칼라베인 드래곤폼 토큰.webp', role: '토큰' }), '아칼라베인 드래곤폼');
+  assert.equal(galleryEntry(portraitItem, source).name, '그레일', 'creature name still wins');
+});
+
+test('gallery entries are ordered by Korean name order with numbers first', async () => {
+  const names = ['하늘', '그레일', 'Zed', '000 정체 미상', '병사 10', '병사 2'];
+  const sorted = sortEntries(names.map((name, i) => ({ id: String(i), name })));
+  assert.deepEqual(sorted.map((e) => e.name), ['000 정체 미상', '그레일', '병사 2', '병사 10', '하늘', 'Zed']);
+
+  clearImageCache();
+  const items = [
+    { ...portraitItem, imageId: '1', creature: { name: '가뭄과 기근의 신 우르투스', classification: '신격' } },
+    { imageId: '2', path: 'wiki/trpg/creatures/NPCs/000 정체 미상/초상화.webp', fileName: '000 정체 미상 초상화.webp', role: '초상화', url: 'https://x/u.webp', use: 'Y', creature: null },
+  ];
+  const fetcher = async () => ({ ok: true, status: 200, json: async () => ({ error: false, data: { pages: 1, items } }) });
+  const entries = await loadGalleryEntries('portrait', { token: 'tok', fetcher, now: 1, force: true });
+  assert.equal(entries[0].name, '000 정체 미상');
 });
