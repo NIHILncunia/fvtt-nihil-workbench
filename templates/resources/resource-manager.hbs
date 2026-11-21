@@ -1,0 +1,218 @@
+<div class="lrm-app-body">
+    <nav class="lrm-tabs" aria-label="자원 관리 탭">
+        <button type="button" data-action="switch-tab" data-tab="create" class="lrm-tab-button {{#if isCreateTab}}active{{/if}}">
+            <i class="fa-solid fa-plus"></i>
+            <span>자원 생성</span>
+        </button>
+        <button type="button" data-action="switch-tab" data-tab="status" class="lrm-tab-button {{#if isStatusTab}}active{{/if}}">
+            <i class="fa-solid fa-chart-simple"></i>
+            <span>자원별 PC 현황</span>
+        </button>
+        <button type="button" data-action="switch-tab" data-tab="actors" class="lrm-tab-button {{#if isActorsTab}}active{{/if}}">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>관리 대상 PC</span>
+        </button>
+    </nav>
+
+    {{#if isCreateTab}}
+    <section class="lrm-panel">
+        <header class="lrm-panel-header">
+            <p class="lrm-kicker">RESOURCE DEFINITION</p>
+            <h2>자원 생성</h2>
+            <p>새 자원은 모든 기존 PC와 이후 생성되는 PC에 즉시 적용됩니다.</p>
+        </header>
+
+        <div class="lrm-create-card">
+            <label class="lrm-field lrm-field-wide">
+                <span>자원명</span>
+                <input type="text" name="resourceName" placeholder="예: 스트레스, 명성, 오염도" autocomplete="off">
+            </label>
+
+            <label class="lrm-field">
+                <span>최대치</span>
+                <input type="number" name="resourceMax" min="1" step="1" value="100">
+            </label>
+
+            <label class="lrm-checkbox-card">
+                <input type="checkbox" name="startFromZero" checked>
+                <span>
+                    <strong>0부터 시작</strong>
+                    <small>해제하면 최대치부터 시작합니다.</small>
+                </span>
+            </label>
+
+            <button type="button" data-action="create-resource" class="lrm-primary-button">
+                <i class="fa-solid fa-plus"></i>
+                <span>자원 생성</span>
+            </button>
+        </div>
+    </section>
+    {{/if}}
+
+    {{#if isStatusTab}}
+    <section class="lrm-panel" data-resource-status>
+        <header class="lrm-panel-header">
+            <p class="lrm-kicker">RESOURCE STATUS</p>
+            <h2>자원별 PC 현황</h2>
+            <p>선택한 자원을 관리 대상 PC에게 개별 또는 일괄 적용합니다.</p>
+        </header>
+
+        {{#if hasResources}}
+        <div class="lrm-resource-toolbar">
+            <label class="lrm-field lrm-resource-select">
+                <span>조회 자원</span>
+                <select name="selectedResourceId">
+                    {{#each resources}}
+                    <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+            </label>
+            <span class="lrm-count">관리 대상 {{managedActorCount}}명</span>
+        </div>
+
+        {{#if selectedResource}}
+        <div class="lrm-definition-card">
+            <div class="lrm-definition-heading">
+                <div>
+                    <p class="lrm-kicker">SELECTED RESOURCE</p>
+                    <h3>{{selectedResource.name}}</h3>
+                </div>
+                <span class="lrm-start-rule">{{#if selectedResource.startFromZero}}0부터 시작{{else}}최대치부터 시작{{/if}}</span>
+            </div>
+
+            <div class="lrm-definition-fields">
+                <label class="lrm-field lrm-field-wide">
+                    <span>자원명</span>
+                    <input type="text" name="definitionName" value="{{selectedResource.name}}">
+                </label>
+                <label class="lrm-field">
+                    <span>최대치</span>
+                    <input type="number" name="definitionMax" min="1" step="1" value="{{selectedResource.max}}">
+                </label>
+                <button type="button" data-action="update-resource-definition" class="lrm-primary-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>설정 저장</span>
+                </button>
+                <button type="button" data-action="archive-resource" class="lrm-danger-button">
+                    <i class="fa-solid fa-ban"></i>
+                    <span>비활성화</span>
+                </button>
+            </div>
+            <p class="lrm-note">최대치를 낮춰도 각 PC의 기존 현재값은 그대로 유지됩니다.</p>
+        </div>
+
+        <div class="lrm-bulk-card">
+            <div>
+                <p class="lrm-kicker">BULK ADJUSTMENT</p>
+                <strong>관리 대상 PC 일괄 증감</strong>
+            </div>
+            <div class="lrm-adjustments">
+                {{#each adjustments}}
+                <button type="button" data-action="bulk-adjust-resource" data-amount="-{{this}}">-{{this}}</button>
+                {{/each}}
+                {{#each adjustments}}
+                <button type="button" data-action="bulk-adjust-resource" data-amount="{{this}}">+{{this}}</button>
+                {{/each}}
+            </div>
+        </div>
+
+        {{#if hasStatusRows}}
+        <div class="lrm-table-wrap">
+            <table class="lrm-table">
+                <thead>
+                    <tr>
+                        <th>PC</th>
+                        <th>현재값</th>
+                        <th>개별 증감</th>
+                        <th>직접 입력</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each statusRows}}
+                    <tr data-actor-uuid="{{uuid}}">
+                        <td><strong>{{name}}</strong></td>
+                        <td class="lrm-value-cell">
+                            <span>{{value}} / {{max}}</span>
+                            <div class="lrm-resource-bar" style="--resource-percent: {{percent}}%;">
+                                <div class="lrm-resource-bar-fill"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="lrm-adjustments lrm-adjustments-compact">
+                                {{#each ../adjustments}}
+                                <button type="button" data-action="adjust-resource" data-amount="-{{this}}">-{{this}}</button>
+                                {{/each}}
+                                {{#each ../adjustments}}
+                                <button type="button" data-action="adjust-resource" data-amount="{{this}}">+{{this}}</button>
+                                {{/each}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="lrm-value-input">
+                                <input type="number" name="resourceValue" min="0" step="1" value="{{value}}">
+                                <button type="button" data-action="set-resource">적용</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="lrm-empty-state">
+            <i class="fa-solid fa-user-plus"></i>
+            <p>관리 대상 PC가 없습니다.</p>
+            <span>관리 대상 PC 탭에서 확인할 캐릭터를 선택하고 저장하세요.</span>
+        </div>
+        {{/if}}
+        {{/if}}
+        {{else}}
+        <div class="lrm-empty-state">
+            <i class="fa-solid fa-layer-group"></i>
+            <p>생성된 자원이 없습니다.</p>
+            <span>자원 생성 탭에서 첫 자원을 만드세요.</span>
+        </div>
+        {{/if}}
+    </section>
+    {{/if}}
+
+    {{#if isActorsTab}}
+    <section class="lrm-panel">
+        <header class="lrm-panel-header">
+            <p class="lrm-kicker">MANAGED CHARACTERS</p>
+            <h2>관리 대상 PC</h2>
+            <p>자원별 PC 현황에 표시하고 일괄 조정할 캐릭터를 선택합니다.</p>
+        </header>
+
+        <div class="lrm-actor-toolbar">
+            <button type="button" data-action="save-managed-actors" class="lrm-primary-button">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>선택 저장</span>
+            </button>
+            <button type="button" data-action="check-all-managed-actors">전체 선택</button>
+            <button type="button" data-action="uncheck-all-managed-actors">전체 해제</button>
+        </div>
+
+        {{#if managedActorRows.length}}
+        <div class="lrm-actor-list-wrap">
+            <ul class="lrm-actor-list">
+                {{#each managedActorRows}}
+                <li>
+                    <label>
+                        <input type="checkbox" name="managedActorUuid" value="{{uuid}}" {{#if managed}}checked{{/if}}>
+                        <span class="lrm-actor-mark"><i class="fa-solid fa-user"></i></span>
+                        <span>{{name}}</span>
+                    </label>
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+        {{else}}
+        <div class="lrm-empty-state">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>현재 월드에 PC Actor가 없습니다.</p>
+        </div>
+        {{/if}}
+    </section>
+    {{/if}}
+</div>

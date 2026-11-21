@@ -6,6 +6,7 @@ import {
 } from './actor-workbench-app.mjs';
 import { isWorkbenchOpen, toggleWorkbench } from './workbench-app.mjs';
 import { openCompendiumWorkbench } from './compendium-workbench-app.mjs';
+import { openResourceManager } from '../resources/index.mjs';
 
 let launcher;
 let LauncherClass;
@@ -27,6 +28,10 @@ export function openWorkbenchLauncher() {
         window: { title: '워크벤치', icon: 'fa-solid fa-hammer' },
         position: { width: 300, height: 'auto', left: 24, top: 140 },
         actions: {
+          openResourceManager: function (event) {
+            event.preventDefault();
+            openResourceManager();
+          },
           openCompendiumWorkbench: function (event) {
             event.preventDefault();
             openCompendiumWorkbench();

@@ -1,0 +1,24 @@
+<div class="lrm-viewer-body">
+    <header class="lrm-viewer-header">
+        <i class="fa-solid fa-bars-progress"></i>
+        <h2>{{actorName}} 자원</h2>
+    </header>
+
+    {{#if resources.length}}
+    <ul class="lrm-viewer-resource-list">
+        {{#each resources}}
+        <li class="lrm-viewer-resource-item">
+            <div class="lrm-resource-heading">
+                <strong>{{name}}</strong>
+                <span>{{value}} / {{max}}</span>
+            </div>
+            <div class="lrm-resource-bar" style="--resource-percent: {{percent}}%;">
+                <div class="lrm-resource-bar-fill"></div>
+            </div>
+        </li>
+        {{/each}}
+    </ul>
+    {{else}}
+    <p class="lrm-empty">현재 표시할 자원이 없습니다.</p>
+    {{/if}}
+</div>

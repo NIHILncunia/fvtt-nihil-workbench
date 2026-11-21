@@ -22,6 +22,8 @@ import { openCompendiumWorkbench, refreshCompendiumWorkbench } from './workbench
 import { content } from './content/index.mjs';
 import { canUseSceneWorkbench, openSceneWorkbench } from './workbench/scene-workbench-app.mjs';
 import { examples } from './content/examples/ranged-fire.mjs';
+import { injectSettingsResourceButton, openResourceManager, registerResourceManager } from './resources/index.mjs';
+import { registerSecretHp } from './secret-hp/secret-hp.mjs';
 
 const MODULE_ID = 'nihil-compendium-module';
 const PRIVILEGED_USER_IDS = new Set(['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn']);
@@ -49,6 +51,7 @@ function registerApi() {
     openCompendiumWorkbench,
     openImageGallery,
     openSceneWorkbench,
+    openResourceManager,
     content,
     examples,
   };
@@ -267,6 +270,7 @@ function registerSettingsRenderHook() {
       html
     ) => {
     injectSettingsWorkbenchButton(html);
+    injectSettingsResourceButton(html);
     // The resource manager may insert its button later in the same hook dispatch.
     queueMicrotask(() => injectSettingsWorkbenchButton(html));
   }
@@ -393,6 +397,8 @@ patchItemDirectoryContextMenu();
 patchActorDirectoryContextMenu();
 globalThis.Hooks?.once?.('init', () => {
   registerGallerySettings();
+  registerSecretHp();
+  registerResourceManager();
   registerSceneHooks();
   registerApi();
   registerContextHook();

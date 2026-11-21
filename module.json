@@ -54,6 +54,7 @@
     "scripts/module.mjs"
   ],
   "styles": [
-    "styles/workbench.css"
+    "styles/workbench.css",
+    "styles/resources.css"
   ]
 }
