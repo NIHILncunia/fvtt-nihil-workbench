@@ -29,7 +29,7 @@ test(
     }
     assert.equal(
       files.length,
-      8,
+      9,
     );
   },
 );

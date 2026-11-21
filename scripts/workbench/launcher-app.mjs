@@ -1,3 +1,4 @@
+import { isSceneWorkbenchOpen, toggleSceneWorkbench } from './scene-workbench-app.mjs';
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
   isActorWorkbenchOpen,
@@ -36,6 +37,12 @@ export function openWorkbenchLauncher() {
             await this.render({ force: true });
             this.bringToFront();
           },
+          toggleSceneWorkbench: async function (event) {
+            event.preventDefault();
+            await toggleSceneWorkbench();
+            await this.render({ force: true });
+            this.bringToFront();
+          },
           toggleActorWorkbench: async function (event) {
             event.preventDefault();
             await toggleActorWorkbench();
@@ -56,6 +63,7 @@ export function openWorkbenchLauncher() {
           ...(await super._prepareContext(options)),
           itemOpen: isWorkbenchOpen(),
           actorOpen: isActorWorkbenchOpen(),
+          sceneOpen: isSceneWorkbenchOpen(),
         };
       }
 

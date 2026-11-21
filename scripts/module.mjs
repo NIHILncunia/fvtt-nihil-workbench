@@ -20,6 +20,7 @@ import { injectSettingsWorkbenchButton, openWorkbenchLauncher } from './workbenc
 import { installAutoAnimationsWorldEffectGuard } from './workbench/autoanimations-compat.mjs';
 import { openCompendiumWorkbench, refreshCompendiumWorkbench } from './workbench/compendium-workbench-app.mjs';
 import { content } from './content/index.mjs';
+import { canUseSceneWorkbench, openSceneWorkbench } from './workbench/scene-workbench-app.mjs';
 import { examples } from './content/examples/ranged-fire.mjs';
 
 const MODULE_ID = 'nihil-compendium-module';
@@ -47,6 +48,7 @@ function registerApi() {
     openWorkbenchLauncher,
     openCompendiumWorkbench,
     openImageGallery,
+    openSceneWorkbench,
     content,
     examples,
   };
@@ -188,6 +190,63 @@ function registerItemDirectoryRenderHook() {
   });
   itemDirectoryRenderHookRegistered = true;
   return true;
+}
+
+// 씬 워크벤치(2026-11-21): 씬 목록 하단 단추와 우클릭 메뉴.
+let sceneHooksRegistered = false;
+const SCENE_DIRECTORY_PATCH = Symbol.for(`${MODULE_ID}.scene-directory-context`);
+
+function injectSceneDirectoryWorkbenchButton(html) {
+  if (!canUseSceneWorkbench()) return false;
+  const root = html?.querySelector ? html : html?.[0];
+  const footer = root?.querySelector?.('.directory-footer');
+  if (!footer || footer.querySelector('.ncm-open-scene-workbench')) return false;
+  const referenceButton = footer.querySelector('button');
+  const button = root.ownerDocument.createElement('button');
+  button.type = 'button';
+  button.className = `${referenceButton?.className ?? ''} ncm-open-scene-workbench`.trim();
+  button.innerHTML = '<i class="fa-solid fa-map"></i><span>Nihil Workbench</span>';
+  button.addEventListener('click', () => openSceneWorkbench());
+  footer.append(button);
+  return true;
+}
+
+function sceneWorkbenchContextOption() {
+  return {
+    label: 'Nihil Workbench에서 편집',
+    icon: '<i class="fa-solid fa-map"></i>',
+    visible: (entry) => {
+      if (!canUseSceneWorkbench()) return false;
+      const sceneId = contextDocumentId(entry);
+      return Boolean(sceneId && globalThis.game?.scenes?.get?.(sceneId));
+    },
+    onClick: (_event, entry) => {
+      const sceneId = contextDocumentId(entry);
+      if (sceneId) openSceneWorkbench({ sceneId });
+    },
+  };
+}
+
+function registerSceneHooks() {
+  if (sceneHooksRegistered || !globalThis.Hooks?.on) return false;
+  globalThis.Hooks.on('renderSceneDirectory', (_app, html) => {
+    injectSceneDirectoryWorkbenchButton(html);
+  });
+  globalThis.Hooks.on('getSceneContextOptions', (_application, contextOptions) => {
+    if (!Array.isArray(contextOptions)) return;
+    if (contextOptions.some(option => (option?.label ?? option?.name) === 'Nihil Workbench에서 편집')) return;
+    contextOptions.push(sceneWorkbenchContextOption());
+  });
+  sceneHooksRegistered = true;
+  return true;
+}
+
+function patchSceneDirectoryContextMenu() {
+  const prototype = globalThis.CONFIG?.ui?.scenes?.prototype;
+  const directory = globalThis.ui?.scenes;
+  const prototypePatched = patchContextOptionTarget(prototype, SCENE_DIRECTORY_PATCH, sceneWorkbenchContextOption);
+  const directoryPatched = patchContextOptionTarget(directory, SCENE_DIRECTORY_PATCH, sceneWorkbenchContextOption);
+  return prototypePatched || directoryPatched;
 }
 
 function registerActorDirectoryRenderHook() {
@@ -334,6 +393,7 @@ patchItemDirectoryContextMenu();
 patchActorDirectoryContextMenu();
 globalThis.Hooks?.once?.('init', () => {
   registerGallerySettings();
+  registerSceneHooks();
   registerApi();
   registerContextHook();
   registerActorContextHook();
@@ -344,6 +404,7 @@ globalThis.Hooks?.once?.('init', () => {
 });
 globalThis.Hooks?.once?.('ready', () => {
   registerApi();
+  patchSceneDirectoryContextMenu();
   patchItemDirectoryContextMenu();
   patchActorDirectoryContextMenu();
   queueMicrotask(installAutoAnimationsWorldEffectGuard);

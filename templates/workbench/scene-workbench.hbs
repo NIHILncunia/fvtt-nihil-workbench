@@ -1,0 +1,82 @@
+<div class="ncm-scene-workbench__layout">
+  <aside class="ncm-scene-workbench__list">
+    <header>
+      <span class="ncm-workbench__eyebrow">씬 워크벤치</span>
+      <h2>월드 씬</h2>
+    </header>
+    <div class="ncm-scene-workbench__list-tools">
+      <input type="search" name="sceneSearch" value="{{search}}" placeholder="씬 이름 조회" aria-label="씬 이름 조회" data-workbench-transient>
+      <button type="button" data-action="newScene" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-plus"></i> 새 씬</button>
+    </div>
+    <div class="ncm-scene-workbench__rows">
+      {{#each scenes}}
+      <button type="button" class="ncm-scene-workbench__row {{#if selected}}is-selected{{/if}}" data-action="selectScene" data-scene-id="{{id}}" data-scene-row data-name="{{name}}">
+        <span class="ncm-scene-workbench__row-thumb">{{#if thumb}}<img src="{{thumb}}" alt="" loading="lazy">{{/if}}</span>
+        <span class="ncm-scene-workbench__row-name">{{name}}</span>
+        {{#if active}}<span class="ncm-scene-workbench__row-badge">활성</span>{{/if}}
+      </button>
+      {{else}}
+      <p class="ncm-workbench__muted">아직 씬이 없습니다. 「새 씬」에서 배경을 골라 만드십시오.</p>
+      {{/each}}
+    </div>
+  </aside>
+
+  <section class="ncm-scene-workbench__editor">
+    <header class="ncm-scene-workbench__head">
+      <div>
+        <span class="ncm-workbench__eyebrow">{{#if isNew}}새 씬{{else}}씬 편집{{/if}}</span>
+        <label class="ncm-scene-workbench__name">씬 이름<input type="text" name="sceneName" value="{{state.name}}" placeholder="배경을 고르면 그림 이름으로 채워집니다" {{#unless canEdit}}disabled{{/unless}}></label>
+      </div>
+      {{#unless isNew}}
+      <div class="ncm-workbench__header-actions">
+        <button type="button" data-action="viewScene"><i class="fa-solid fa-eye"></i> 씬 보기</button>
+        <button type="button" data-action="deleteScene" class="danger" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-trash"></i> 씬 삭제</button>
+      </div>
+      {{/unless}}
+    </header>
+
+    <div class="ncm-workbench__scroll ncm-scene-workbench__body">
+      <section class="ncm-workbench__card">
+        <h3>배경 이미지 <span>맵 갤러리의 배틀맵·풍경</span></h3>
+        <button type="button" class="ncm-scene-workbench__preview" data-action="pickBackground" {{#unless canEdit}}disabled{{/unless}} title="클릭해서 맵 갤러리에서 고르기">
+          {{#if state.src}}<img src="{{state.src}}" alt="배경 미리보기">{{else}}<span><i class="fa-solid fa-images"></i> 배경 고르기</span>{{/if}}
+        </button>
+        <div class="ncm-scene-workbench__src">
+          <label>배경 경로<input type="text" name="sceneSrc" value="{{state.src}}" placeholder="https://nihilncunia-images.com/…" {{#unless canEdit}}disabled{{/unless}}></label>
+          <div class="ncm-scene-workbench__facts">
+            <span>이미지 <strong>{{sizeText}}</strong></span>
+            <span>배경색 <strong class="ncm-scene-workbench__swatch" style="--swatch: {{backgroundColor}}">검은색 고정</strong></span>
+          </div>
+          {{#if colorFixedNote}}<p class="ncm-workbench__muted">{{colorFixedNote}}</p>{{/if}}
+        </div>
+      </section>
+
+      <section class="ncm-workbench__card">
+        <h3>격자 <span>장면 크기는 이미지 원본 크기</span></h3>
+        <div class="ncm-scene-workbench__grid-row">
+          <label>가로 칸 수<input type="number" name="sceneColumns" min="1" step="1" value="{{state.columns}}" {{#unless canEdit}}disabled{{/unless}}></label>
+          <p class="ncm-scene-workbench__grid-preview {{#unless grid.ok}}is-error{{/unless}}" data-grid-preview>{{grid.text}}</p>
+        </div>
+      </section>
+
+      <section class="ncm-workbench__card">
+        <h3>조명</h3>
+        <div class="ncm-scene-workbench__light">
+          <label>밝기 <output data-luminosity-value>{{luminosityText}}</output>
+            <input type="range" name="sceneLuminosity" min="-1" max="1" step="0.05" value="{{state.luminosity}}" {{#unless canEdit}}disabled{{/unless}}>
+            <small>기본 환경광 밝기. 0이 기본, 낮을수록 칙칙하고 높을수록 맑습니다.</small>
+          </label>
+          <label class="ncm-workbench__toggle"><input type="checkbox" name="sceneGlobalLight" {{#if state.globalLight}}checked{{/if}} {{#unless canEdit}}disabled{{/unless}}> 전역 조명 (장면 전체를 밝힘)</label>
+          <label>어둠 레벨 <output data-darkness-value>{{darknessText}}</output>
+            <input type="range" name="sceneDarkness" min="0" max="1" step="0.05" value="{{state.darkness}}" {{#unless canEdit}}disabled{{/unless}}>
+            <small>0은 낮, 1은 완전한 밤입니다.</small>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <footer class="ncm-scene-workbench__foot">
+      <button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{#if isNew}}씬 만들기{{else}}씬 저장{{/if}}</button>
+    </footer>
+  </section>
+</div>
