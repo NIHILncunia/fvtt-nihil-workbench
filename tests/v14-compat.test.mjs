@@ -119,3 +119,19 @@ test('legacy DAE showIcon flags are shown as always and migrated on save', async
   assert.equal(modern.options.find((option) => option.selected).value, '0');
   assert.ok(!effectFields({ flags: {} }, { dae: true }).some((entry) => entry.path === 'flags.dae.showIcon'));
 });
+
+test('ownership edits replace the whole v14 ownership mapping', async () => {
+  const { ownershipPatch } = await import('../scripts/workbench/ownership-workbench-app.mjs');
+  const fields = [{ path: 'ownership.player' }, { path: 'ownership.other' }];
+  const previous = globalThis._replace;
+  globalThis._replace = (value) => ({ replaced: value });
+  try {
+    assert.deepEqual(
+      ownershipPatch({ 'ownership.player': -1, 'ownership.other': 2 }, fields, { default: 0, player: 3, keep: 1 }),
+      { ownership: { replaced: { default: 0, keep: 1, other: 2 } } },
+    );
+  } finally {
+    if (previous === undefined) delete globalThis._replace;
+    else globalThis._replace = previous;
+  }
+});

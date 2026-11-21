@@ -1,5 +1,4 @@
 import { getDocumentWorkbenchClass } from './document-workbench-app.mjs';
-import { addDeletion } from '../shared/deletion.mjs';
 
 const LEVELS = Object.freeze({ 0: '조회 불가', 1: '제한 조회', 2: '조회 가능', 3: '조회·수정 가능' });
 let OwnershipClass;
@@ -31,17 +30,34 @@ export function canManageOwnership(document, callerCanEdit = () => true) {
   return Boolean(collection?.get?.(document.id) === document && document.canUserModify?.(globalThis.game.user, 'update') !== false);
 }
 
-export function ownershipPatch(patch, fields) {
+export function ownershipPatch(patch, fields, current = null) {
   const allowed = new Set(fields.map(field => field.path));
   const result = {};
   for (const [path, value] of Object.entries(patch)) {
     if (!allowed.has(path) || !Number.isInteger(value) || value < (path === 'ownership.default' ? 0 : -1) || value > 3) {
       throw new Error('사용자 권한 값을 확인하십시오.');
     }
-    if (value === -1) addDeletion(result, path);
-    else result[path] = value;
+    result[path] = value;
   }
-  return result;
+  // Foundry v14: 권한 묶음(DocumentOwnershipField)은 삭제 연산자를 받지 않는다.
+  // 코어 권한 창처럼 바뀐 전체 권한을 ForcedReplacement(_replace)로 보낸다.
+  const replace = globalThis._replace ?? globalThis.foundry?.data?.operators?.ForcedReplacement?.create;
+  if (replace && current) {
+    const ownership = { ...current };
+    for (const [path, value] of Object.entries(result)) {
+      const userId = path.slice('ownership.'.length);
+      if (value === -1) delete ownership[userId];
+      else ownership[userId] = value;
+    }
+    return { ownership: replace(ownership) };
+  }
+  // 연산자가 없는 환경(v13·단위 시험)은 예전 삭제 키를 쓴다.
+  const legacy = {};
+  for (const [path, value] of Object.entries(result)) {
+    if (value === -1) legacy[path.replace('ownership.', 'ownership.-=')] = null;
+    else legacy[path] = value;
+  }
+  return legacy;
 }
 
 function getOwnershipClass() {
@@ -75,7 +91,7 @@ export function editOwnership(document, options = {}) {
     save: async patch => {
       // Recheck immediately before writing; keep unrelated ownership entries intact.
       if (!canManageOwnership(document, callerCanEdit)) throw new Error('현재 대상의 권한을 변경할 수 없습니다. 입력을 보존했습니다.');
-      const updated = await document.update(ownershipPatch(patch, fields));
+      const updated = await document.update(ownershipPatch(patch, fields, document.toObject?.().ownership ?? document.ownership));
       if (!updated) throw new Error('권한 저장이 취소되었습니다. 입력을 보존했습니다.');
       return updated;
     },
