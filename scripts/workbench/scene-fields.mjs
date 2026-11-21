@@ -63,6 +63,8 @@ export function sceneCreateData(input) {
   const v = normalizeSceneInput(input);
   return {
     name: v.name,
+    // 월드에 활성 씬이 없으면 코어가 새 씬을 자동으로 활성화해 접속자 화면을 바꾼다. 워크벤치는 만들기만 한다.
+    active: false,
     width: v.width,
     height: v.height,
     grid: { type: 1, size: v.grid.size },

@@ -30,6 +30,7 @@ test('new scenes keep only the decided fields and put the background on the v14 
   const data = sceneCreateData({ name: ' 성 배틀맵 1 ', src: 'https://nihilncunia-images.com/battle-maps/a.webp', width: 1440, height: 1920, columns: 29, luminosity: 0.234, globalLight: true, darkness: 0.7 });
   assert.deepEqual(data, {
     name: '성 배틀맵 1',
+    active: false,
     width: 1440,
     height: 1920,
     grid: { type: 1, size: 50 },
