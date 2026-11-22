@@ -978,3 +978,14 @@
         flex-basis: auto;
     }
 }
+
+/* 액터 디렉터리 아래쪽 「Import Statblock」(5e-statblock-importer의 #sbi-main-button, 그 모듈 sbi.css가 width 97%·height 28px)을
+   바로 아래 「Nihil Workbench」 단추와 같은 크기로 맞춘다. 외부 모듈 파일은 고치지 않는다(2026-11-22). */
+.directory-footer #sbi-main-button {
+  width: 100%;
+  height: var(--button-size);
+  min-height: var(--button-size);
+  margin: 0;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
+}
