@@ -1024,3 +1024,10 @@
   padding: 0 0.5rem;
   gap: 0.25rem;
 }
+
+/* 사이드바 목록 썸네일: 세로 초상화가 위쪽만 잘려 보이지 않게 그림 전체를 칸 안에 담는다.
+   v13에서는 Monk's Little Details의 core-css-changes가 이 규칙을 넣었으나 v14판(14.01)에서 빠졌다. */
+.directory:not(.compendium-sidebar):not(.scenes-sidebar) .directory-list .directory-item img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
