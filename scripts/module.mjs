@@ -24,6 +24,7 @@ import { canUseSceneWorkbench, openSceneWorkbench } from './workbench/scene-work
 import { examples } from './content/examples/ranged-fire.mjs';
 import { injectSettingsResourceButton, openResourceManager, registerResourceManager } from './resources/index.mjs';
 import { registerSecretHp } from './secret-hp/secret-hp.mjs';
+import { registerTokenPortraitDefault } from './shared/token-portrait-default.mjs';
 
 const MODULE_ID = 'nihil-compendium-module';
 const PRIVILEGED_USER_IDS = new Set(['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn']);
@@ -398,6 +399,7 @@ patchActorDirectoryContextMenu();
 globalThis.Hooks?.once?.('init', () => {
   registerGallerySettings();
   registerSecretHp();
+  registerTokenPortraitDefault();
   registerResourceManager();
   registerSceneHooks();
   registerApi();
