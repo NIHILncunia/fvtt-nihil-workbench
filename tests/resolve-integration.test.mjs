@@ -8,6 +8,8 @@ import {
 
 import {
   MODULE_ID,
+  actorCombat,
+  combatContext,
   resolveActor,
   saveResolve,
   statusId,
@@ -45,6 +47,7 @@ import {
 } from '../scripts/resolve/cards.mjs';
 
 import {
+  chooseCondition,
   injectResolveSheet
 } from '../scripts/resolve/sheet.mjs';
 
@@ -290,7 +293,7 @@ test(
       true
     );
     message.current.used = [];
-    game.combat = combatFor([ pc ]);
+    game.combat = combatFor([ pc, npc ]);
     await click(event);
     assert.equal(
       pcStress(pc).value,
@@ -482,6 +485,49 @@ function combatFor(actors) {
   };
 }
 
+function cardControl(data) {
+  const message = {
+    id: `chat-${++sequence}`,
+    current: clone(data.flags[MODULE_ID].resolveCard),
+    getFlag() {
+      return clone(this.current);
+    },
+    async setFlag(
+      _module,
+      _key,
+      value
+    ) {
+      this.current = clone(value);
+    }
+  };
+  let listener;
+  const button = {
+    dataset: {
+      resolveAction: '0'
+    },
+    addEventListener(
+      _event,
+      callback
+    ) {
+      listener = callback;
+    }
+  };
+  renderResolveCard(
+    message,
+    {
+      querySelector() {},
+      querySelectorAll: () => [ button ]
+    }
+  );
+  return {
+    message: message,
+    click: () => listener({
+      preventDefault() {},
+      stopPropagation() {}
+    })
+  };
+}
+
 test.beforeEach(() => {
   messages = [];
   warnings = [];
@@ -520,6 +566,7 @@ test.beforeEach(() => {
     actors: [],
     scenes: [],
     combat: null,
+    combats: [],
     settings: {
       get: (
         module,
@@ -1772,3 +1819,465 @@ test(
     );
   }
 );
+
+test(
+  '액터 전투 선택은 현재 참가 전투 우선, 없으면 시작된 전투의 최신 갱신 순',
+  () => {
+    const npc = actor('적');
+    const older = combatFor([ npc ]);
+    const newer = combatFor([ npc ]);
+    const pending = combatFor([ npc ]);
+    older._stats = { modifiedTime: 10 };
+    newer._stats = { modifiedTime: 20 };
+    pending._stats = { modifiedTime: 30 };
+    pending.started = false;
+    game.combats = [ older, newer, pending ];
+    game.combat = older;
+    assert.equal(
+      actorCombat(npc),
+      older
+    );
+    game.combat = combatFor([ actor('다른 적') ]);
+    assert.equal(
+      actorCombat(npc),
+      newer
+    );
+    game.combat = null;
+    assert.deepEqual(
+      combatContext(npc),
+      { id: newer.id, round: 1, turn: 0 }
+    );
+    newer.started = false;
+    older.started = false;
+    assert.equal(
+      combatContext(npc),
+      null
+    );
+  }
+);
+
+test(
+  '비연결 토큰은 같은 기본 액터·다른 토큰과 장면을 구별하고 연결 토큰은 액터 id로 찾음',
+  () => {
+    const npc = actor('base');
+    npc.token = {
+      id: 'token-a',
+      parent: { id: 'scene-a' },
+      actorLink: false
+    };
+    const correct = combatFor([ npc ]);
+    correct.scene = { id: 'scene-a' };
+    correct.combatants = [ { actorId: 'base', tokenId: 'token-a' } ];
+    const otherToken = combatFor([ npc ]);
+    otherToken.scene = correct.scene;
+    otherToken.combatants = [ { actorId: 'base', tokenId: 'token-b' } ];
+    const otherScene = combatFor([ npc ]);
+    otherScene.scene = { id: 'scene-b' };
+    otherScene.combatants = correct.combatants;
+    game.combat = otherToken;
+    game.combats = [ otherScene, correct ];
+    assert.equal(
+      actorCombat(npc),
+      correct
+    );
+    game.combat = otherScene;
+    assert.equal(
+      actorCombat(npc),
+      correct
+    );
+    game.combats = [ otherScene, otherToken ];
+    assert.equal(
+      actorCombat(npc),
+      null
+    );
+    npc.token.actorLink = true;
+    assert.equal(
+      actorCombat(npc),
+      otherScene
+    );
+  }
+);
+
+for (const viewed of [ '다른 전투', '전투 없음' ]) {
+  test(
+    `GM 화면 ${viewed}: 비연결 적의 의지 라운드 상한·쓴 조건·시트·알림은 참가 전투 기준`,
+    async () => {
+      const npc = actor(
+        'base',
+        'npc',
+        { settings: { '투지': 3, '의지': 3 } }
+      );
+      npc.token = { id: 'token', parent: { id: 'scene' }, actorLink: false };
+      const combat = combatFor([ npc ]);
+      combat.scene = { id: 'scene' };
+      combat.combatants = [ { actorId: npc.id, tokenId: npc.token.id, actor: npc } ];
+      game.combat = viewed === '다른 전투' ? combatFor([ actor('다른 적') ]) : null;
+      game.combats = [ combat ];
+      for (const number of [ 1, 2, 3 ]) {
+        const result = await changeActorResolve(
+          npc,
+          { axis: '의지', direction: '차감', number: number, amount: 1 }
+        );
+        assert.equal(
+          result.delta,
+          number === 3 ? 0 : -1
+        );
+      }
+      const state = storedResolve(npc);
+      assert.equal(
+        state.current.의지,
+        1
+      );
+      assert.equal(
+        state.encounters.outside,
+        undefined
+      );
+      assert.deepEqual(
+        state.encounters[combat.id].used,
+        [ '의지 차감 1', '의지 차감 2' ]
+      );
+      assert.equal(
+        state.encounters[combat.id].rounds[0].changes['의지 차감'],
+        2
+      );
+      let dialog;
+      foundry.applications.api.DialogV2.wait = async options => {
+        dialog = options.content;
+        return null;
+      };
+      await chooseCondition(
+        npc,
+        '의지'
+      );
+      assert.match(
+        dialog,
+        /의지 차감 1 — 쓴 조건/
+      );
+      combat.round++;
+      await changeActorResolve(
+        npc,
+        { axis: '의지', direction: '차감', number: 3, amount: 1 }
+      );
+      assert.equal(
+        storedResolve(npc).modeCombatId,
+        combat.id
+      );
+      assert.equal(
+        storedResolve(npc).notices.at(-1).combatId,
+        combat.id
+      );
+      await deliverNotice(npc);
+      assert.ok(messages.some(message => {
+        return message.content.includes('폭주 유형 d12');
+      }));
+      assert.ok(messages.every(message => {
+        return message.flags[MODULE_ID].resolveCard.combatId === combat.id;
+      }));
+    }
+  );
+
+  test(
+    `GM 화면 ${viewed}: PC마다 소속 전투의 스트레스 ±15를 공유하고 전투 밖 PC는 제한하지 않음`,
+    async () => {
+      const pcs = [ 'A', 'B', 'C', '밖' ].map(id => {
+        return actor(
+          id,
+          'character'
+        );
+      });
+      const first = combatFor(pcs.slice(0, 2));
+      const second = combatFor([ pcs[2] ]);
+      game.combats = [ first, second ];
+      game.combat = viewed === '다른 전투' ? combatFor([ actor('다른 적') ]) : null;
+      for (const pc of pcs) await setActorResourceValue(
+        pc,
+        'stress',
+        50
+      );
+      for (const amount of [ 10, 10, 10 ]) await applyStress(
+        pcs,
+        amount
+      );
+      assert.deepEqual(
+        pcs.map(pc => pcStress(pc).value),
+        [ 65, 65, 65, 80 ]
+      );
+      for (const amount of [ -10, -10, -10 ]) await applyStress(
+        pcs,
+        amount
+      );
+      assert.deepEqual(
+        pcs.map(pc => pcStress(pc).value),
+        [ 50, 50, 50, 50 ]
+      );
+      for (const [ combat, members ] of [ [ first, pcs.slice(0, 2) ], [ second, [ pcs[2] ] ] ]) {
+        const tally = combat.getFlag(
+          MODULE_ID,
+          'resolveStress'
+        );
+        assert.deepEqual(
+          Object.keys(tally).sort(),
+          members.map(pc => pc.uuid).sort()
+        );
+        for (const pc of members) assert.deepEqual(
+          tally[pc.uuid],
+          { up: 15, down: 15 }
+        );
+      }
+      assert.equal(
+        game.combat?.getFlag(
+          MODULE_ID,
+          'resolveStress'
+        ),
+        undefined
+      );
+    }
+  );
+}
+
+test(
+  '장면을 바꿔도 참가 전투의 카드 단추는 적용되고 전투가 종료된 카드는 거절',
+  async () => {
+    const npc = actor(
+      '적',
+      'npc',
+      { mode: '폭주', type: 1 }
+    );
+    game.actors = [ npc ];
+    const combat = combatFor([ npc ]);
+    game.combats = [ combat ];
+    game.combat = combatFor([ actor('다른 적') ]);
+    await publishEvent(
+      npc,
+      { kind: 'NPC 턴', mode: '폭주', stamp: `${combat.id}:1:0` }
+    );
+    const current = cardControl(messages.at(-1));
+    game.combat = null;
+    rolls.push(6);
+    await current.click();
+    assert.deepEqual(
+      current.message.current.used,
+      [ 0 ]
+    );
+    await deliverNotice(npc);
+    assert.match(
+      messages.at(-1).content,
+      /턴 굴림 d6: 6 — 제약/
+    );
+    const stale = cardControl(messages[0]);
+    combat.started = false;
+    await stale.click();
+    assert.deepEqual(
+      stale.message.current.used,
+      []
+    );
+    assert.match(
+      warnings.at(-1),
+      /다른 전투/
+    );
+  }
+);
+
+test(
+  '다른 장면에서 PC 상태 시작·턴 굴림과 각성 적 HP0 기록도 참가 전투 기준',
+  async () => {
+    const pc = actor(
+      'PC',
+      'character'
+    );
+    const npc = actor(
+      '각성 적',
+      'npc',
+      { awakened: true }
+    );
+    const combat = combatFor([ pc, npc ]);
+    game.combats = [ combat ];
+    game.combat = combatFor([ actor('다른 적') ]);
+    await applyPcState(
+      pc,
+      '백색 맹세',
+      1
+    );
+    assert.equal(
+      storedResolve(pc).pc.started,
+      `${combat.id}:1:0`
+    );
+    combat.round = 2;
+    await combatUpdated(
+      combat,
+      { round: 2 }
+    );
+    rolls.push(6);
+    assert.equal(
+      await runCardAction(
+        pc,
+        messages.at(-1).flags[MODULE_ID].resolveCard.actions[0]
+      ),
+      true
+    );
+    npc.system.attributes.hp.value = 0;
+    await afterActorUpdate(
+      npc,
+      { 'system.attributes.hp.value': 0 },
+      { ncmResolveOldHp: 10 }
+    );
+    assert.equal(
+      storedResolve(npc).encounters[combat.id].awakenedDefeat,
+      true
+    );
+    assert.equal(
+      storedResolve(npc).encounters.outside,
+      undefined
+    );
+    assert.match(
+      messages.at(-1).content,
+      /스트레스 −10/
+    );
+  }
+);
+
+const breakdownNotes = {
+  reinforcement: '증원은 남은 적의 4분의 1 이하',
+  hostage: '인질은 해치지 않으며 PC가 5피트',
+  target: '목표가 PC면 다시 굴립니다',
+  threat: 'RT-06 위협 +1',
+  harm: '해치는 결과는 한 번만',
+  return: '다음에 만나면 투지 최대치가 1칸'
+};
+
+const breakdownCases = {
+  '사람': { 1: 'threat', 3: 'reinforcement', 7: 'hostage', 8: 'harm' },
+  '짐승': { 3: 'reinforcement', 6: 'harm', 8: 'return' },
+  '이형': { 3: 'reinforcement', 5: 'return', 7: 'harm', 8: 'target' }
+};
+
+for (const [ kind, rows ] of Object.entries(breakdownCases)) {
+  for (let number = 1; number <= 8; number++) {
+    for (const source of [ '피트', '굴림' ]) {
+      test(
+        `무너짐 ${source} ${kind} ${number}: 해당 줄의 안내만 표시`,
+        async () => {
+          const npc = actor(
+            '적',
+            'npc',
+            { settings: { kind: kind } }
+          );
+          if (source === '피트') npc.items.push({
+            type: 'feat',
+            name: '(무너짐) 준비된 결과',
+            system: { description: { value: `<p>정해 둔 행동. (RT-07 무너짐 ${kind} ${number})</p>` } }
+          });
+          await publishEvent(
+            npc,
+            source === '피트' ? { kind: '무너짐' } : { kind: 'RT 결과', table: '무너짐', total: number }
+          );
+          const content = messages.at(-1).content;
+          assert.match(
+            content,
+            /결과 뒤에는 싸움을 그만둡니다\. 공격받아도 다시 싸우지 않습니다\./
+          );
+          for (const [ key, text ] of Object.entries(breakdownNotes)) assert.equal(
+            content.includes(text),
+            rows[number] === key,
+            `${key}: ${content}`
+          );
+        }
+      );
+    }
+  }
+}
+
+test(
+  '무너짐 줄이 없거나 잘못된 피트는 공통 안내만, 피트의 종류는 설정과 달라도 원문 기준',
+  async () => {
+    for (const text of [ null, '달아난다.', '달아난다. (RT-07 무너짐 사람 9)' ]) {
+      const npc = actor('적');
+      if (text) npc.items.push({
+        type: 'feat',
+        name: '(무너짐) 준비된 결과',
+        system: { description: { value: text } }
+      });
+      await publishEvent(
+        npc,
+        { kind: '무너짐' }
+      );
+      const content = messages.at(-1).content;
+      assert.match(
+        content,
+        /결과 뒤에는 싸움을 그만둡니다/
+      );
+      for (const text of Object.values(breakdownNotes)) assert.equal(
+        content.includes(text),
+        false
+      );
+    }
+    const npc = actor('적');
+    npc.items.push({
+      type: 'feat',
+      name: '(무너짐) 마지막 목표',
+      system: { description: { value: '목표로 향한다. (RT-07 무너짐 이형 8)' } }
+    });
+    await publishEvent(
+      npc,
+      { kind: '무너짐' }
+    );
+    assert.ok(messages.at(-1).content.includes(breakdownNotes.target));
+    assert.equal(
+      messages.at(-1).content.includes(breakdownNotes.harm),
+      false
+    );
+  }
+);
+
+for (const mode of [ '폭주', '붕괴' ]) {
+  for (const feat of [ false, true ]) {
+    test(
+      `${mode} 턴 카드(${feat ? '피트' : '유형 표'}): 시작은 한 줄, 1~2만 긴 규칙, 3~6은 제약`,
+      async () => {
+        const npc = actor(
+          '적',
+          'npc',
+          { mode: mode, type: 1 }
+        );
+        if (feat) npc.items.push({
+          type: 'feat',
+          name: `(${mode}) 정한 반응`,
+          system: { description: { value: `제약: 문 앞을 지킨다. 강제 행동: 방패로 밀친다. 외침: PC 스트레스 +3. (${mode} 1)` } }
+        });
+        await publishEvent(
+          npc,
+          { kind: 'NPC 턴', mode: mode, stamp: 'stamp' }
+        );
+        assert.match(
+          messages.at(-1).content,
+          /<p>턴 굴림 d6: 1~2 강제 행동과 외침, 3~6 제약을 지키며 평소대로<\/p>/
+        );
+        assert.doesNotMatch(
+          messages.at(-1).content,
+          /보너스 행동|외침은 30피트/
+        );
+        for (const total of [ 1, 2, 3, 4, 5, 6 ]) {
+          await publishEvent(
+            npc,
+            { kind: 'NPC 턴 결과', mode: mode, total: total }
+          );
+          const content = messages.at(-1).content;
+          assert.equal(
+            content.includes('보너스 행동은 쓰지 않습니다'),
+            total <= 2
+          );
+          if (total >= 3) {
+            assert.doesNotMatch(
+              content,
+              /외침은 30피트|방패로 밀친다|외침 \+3/
+            );
+            assert.match(
+              content,
+              feat ? /문 앞을 지킨다/ : mode === '폭주' ? /가장 가까운 생물만 노린다/ : /가장 가까운 출구 쪽으로만 움직인다/
+            );
+          }
+        }
+      }
+    );
+  }
+}

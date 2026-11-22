@@ -73,7 +73,7 @@ export async function deliverNotice(actor) {
         delivered.add(notice.id);
         try {
           // 전투가 끝나거나 다른 전투로 넘어간 뒤 재접속한 오래된 카드는 만들지 않는다.
-          if (notice.combatId === (combatContext()?.id ?? null)) {
+          if (notice.combatId === (combatContext(actor)?.id ?? null)) {
             for (const event of notice.events) await publishEvent(
               actor,
               event
@@ -152,7 +152,7 @@ export async function afterActorUpdate(
         } = readResolve(representative);
         const record = encounterRecord(
           state,
-          combatContext()?.id
+          combatContext(representative)?.id
         );
         if (state.awakened && !record.awakenedDefeat) {
           record.awakenedDefeat = true;

@@ -19,6 +19,7 @@ import {
 
 import {
   MODULE_ID,
+  actorCombat,
   assertGM,
   combatContext,
   saveResolve,
@@ -59,28 +60,27 @@ export function pcStress(actor) {
 
 export async function applyStress(
   actors,
-  amount,
-  combat = globalThis.game?.combat
+  amount
 ) {
   assertGM();
   // 한 카드의 여러 PC와 서로 다른 카드의 전투 누적 갱신을 같은 큐에서 직렬화한다.
   return serial(
     'resolve-stress',
     async () => {
-      const context = combatContext(combat);
-      const tallies = structuredClone(combat?.getFlag(
-        MODULE_ID,
-        'resolveStress'
-      ) ?? {});
       for (const actor of actors) {
         const entry = pcStress(actor);
         if (!entry) continue;
+        const combat = actorCombat(actor);
+        const tallies = structuredClone(combat?.getFlag(
+          MODULE_ID,
+          'resolveStress'
+        ) ?? {});
         const result = stressChange(
           entry.value,
           amount,
           tallies[actor.uuid],
           {
-            combat: Boolean(context),
+            combat: Boolean(combat),
             black: storedResolve(actor).pc?.kind === '검은 광기'
           }
         );
@@ -91,13 +91,15 @@ export async function applyStress(
           entry.definition.id,
           result.value
         );
-        if (context) tallies[actor.uuid] = result.tally;
+        if (combat) {
+          tallies[actor.uuid] = result.tally;
+          await combat.setFlag(
+            MODULE_ID,
+            'resolveStress',
+            tallies
+          );
+        }
       }
-      if (context) await combat.setFlag(
-        MODULE_ID,
-        'resolveStress',
-        tallies
-      );
     }
   );
 }
@@ -130,7 +132,7 @@ export async function applyPcState(
   if (!entry || !row || ![ '백색 맹세', '검은 광기' ].includes(kind)) return;
   await removePcEffect(actor);
   const state = storedResolve(actor);
-  const context = combatContext();
+  const context = combatContext(actor);
   const description = [ ...TABLES['공통 효과'][kind], row.effect ?? row.restriction, row.action ? `강제 행동(턴 굴림 1~2, 진행자가 움직임): ${row.action}` : '', `외침: ${row.cry}`, '긴 휴식을 마칠 때까지', '수치는 진행자가 적용합니다.' ].filter(Boolean).map(text => {
     return `<p>${escapeHtml(text)}</p>`;
   }).join('');

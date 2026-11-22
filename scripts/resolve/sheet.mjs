@@ -133,7 +133,7 @@ export async function chooseCondition(
   } = readResolve(input);
   const record = encounterRecord(
     state,
-    combatContext()?.id
+    combatContext(actor)?.id
   );
   const rows = GROUPS.filter(group => {
     return group.startsWith(axis);

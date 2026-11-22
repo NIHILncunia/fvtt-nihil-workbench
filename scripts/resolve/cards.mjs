@@ -29,6 +29,8 @@ export const DEFAULT_AWAKENING = '전투가 끝날 때까지 명중 굴림과 �
 
 const turnRules = '강제 행동은 행동과 이동을 씁니다. 보너스 행동은 쓰지 않습니다. 행동을 할 수 없으면 제약대로 행동하고 외침은 없습니다. 외침은 30피트 안 대상에게 닿습니다. 적의 투지·의지 차감은 진행자가 해당 적 시트에서 처리합니다(한 적에게 전투당 1칸, 적 편 외침은 라운드마다 하나, 차감 상한에 포함).';
 
+const turnSummary = '턴 굴림 d6: 1~2 강제 행동과 외침, 3~6 제약을 지키며 평소대로';
+
 const paragraphs = text => e(text).split('\n').filter(Boolean).map(line => {
   return `<p>${line}</p>`;
 }).join('');
@@ -69,7 +71,7 @@ export async function postCard(
       [MODULE_ID]: {
         resolveCard: {
           actorUuid: actor.uuid,
-          combatId: combatContext()?.id ?? null,
+          combatId: combatContext(actor)?.id ?? null,
           actions: actions,
           used: []
         }
@@ -84,6 +86,20 @@ function reaction(
 ) {
   const feat = profile.reactions[kind];
   return feat ? `<h4>${e(feat.name)}</h4>${paragraphs(feat.text)}` : '';
+}
+
+function breakdownGuidance(
+  kind,
+  number
+) {
+  const notes = [ '결과 뒤에는 싸움을 그만둡니다. 공격받아도 다시 싸우지 않습니다.' ];
+  if (number === 3) notes.push('증원을 부른 다음 턴부터 물러납니다. 증원은 남은 적의 4분의 1 이하(버림, 최소 하나)가 두 라운드 뒤 끝에 도착합니다. 도착하면 남은 적의 투지가 1칸 오르지만 이미 꺾인 적은 오르지 않습니다.');
+  if (kind === '사람' && number === 7) notes.push('인질은 해치지 않으며 PC가 5피트 안에 오면 놓고 달아납니다.');
+  if (kind === '이형' && number === 8) notes.push('마지막 목표에서 PC를 해치지 않는 일만 합니다. 목표가 PC면 다시 굴립니다.');
+  if (kind === '사람' && number === 1) notes.push('달아나 전장 밖으로 벗어나 본진에 알리면 RT-06 위협 +1입니다(장면당 상한에 포함).');
+  if (kind === '사람' && number === 8 || kind === '짐승' && number === 6 || kind === '이형' && number === 7) notes.push('해치는 결과는 한 번만 처리합니다. 피해는 RT-07 전장 사건 규칙을 따릅니다.');
+  if (kind === '짐승' && number === 8 || kind === '이형' && number === 5) notes.push('다음에 만나면 투지 최대치가 1칸 줄어듭니다(최소 1칸).');
+  return paragraphs(notes.join('\n'));
 }
 
 function typeRow(
@@ -166,7 +182,13 @@ export async function publishEvent(
       profile,
       event.kind
     ) + '<p>다음 턴에 그 적의 행동으로 처리합니다.</p>';
-    if (event.kind === '무너짐') body += '<p>결과 뒤에는 싸움을 그만둡니다. 공격받아도 다시 싸우지 않습니다. 증원은 남은 적의 4분의 1 이하가 두 라운드 뒤 끝에 도착합니다. 인질은 해치지 않으며 PC가 5피트 안에 오면 놓습니다. 이형의 마지막 목표가 PC면 다시 굴립니다. 달아나 본진에 알리면 RT-06 위협 +1입니다.</p>';
+    if (event.kind === '무너짐') {
+      const row = profile.reactions.무너짐?.text.match(/\(RT-07\s+무너짐\s+(사람|짐승|이형)\s+([1-8])\)\s*$/);
+      body += breakdownGuidance(
+        row?.[1],
+        row ? Number(row[2]) : null
+      );
+    }
     if (!profile.reactions[event.kind]) actions.push({
       kind: 'rt-roll',
       table: event.kind,
@@ -240,7 +262,10 @@ export async function publishEvent(
       const row = TABLES[event.table][event.total - 1];
       title = `RT-07 ${event.table} d8: ${event.total} (${profile.kind})`;
       body = paragraphs(row.actions[profile.kind]);
-      if (event.table === '무너짐') body += '<p>다음 턴에 한 번 처리한 뒤 싸움을 그만둡니다. 공격받아도 다시 싸우지 않습니다. 인질은 해치지 않고 PC가 5피트 안에 오면 놓습니다. 이형의 마지막 목표가 PC면 다시 굴립니다.</p>';
+      if (event.table === '무너짐') body += '<p>다음 턴에 그 적의 행동으로 처리합니다.</p>' + breakdownGuidance(
+        profile.kind,
+        event.total
+      );
       actions = [ {
         kind: 'rt-roll',
         table: event.table,
@@ -264,7 +289,7 @@ export async function publishEvent(
 
     case 'NPC 턴':
     title = `${mode} — 턴 시작`;
-    body = paragraphs(turnRules);
+    body = paragraphs(turnSummary);
     if (!typeRow(
       profile,
       state,
@@ -291,8 +316,9 @@ export async function publishEvent(
         state,
         mode,
         forced
-      ) + paragraphs(turnRules);
+      );
       if (forced) {
+        body += paragraphs(turnRules);
         const feat = profile.reactions[mode];
         const cry = feat ? feat.text.match(/외침\s*[:：]([\s\S]*)/)?.[1] ?? '' : typeRow(
           profile,
@@ -452,13 +478,13 @@ export function renderResolveCard(
                 'resolveCard'
               );
               if (latest.used.includes(index)) return;
-              if (latest.combatId !== (combatContext()?.id ?? null)) {
-                warn('다른 전투의 카드입니다. 현재 전투의 카드를 사용하세요.');
-                return;
-              }
               const action = latest.actions[index];
               const actor = await globalThis.fromUuid(latest.actorUuid);
               if (!actor || !action) return;
+              if (latest.combatId !== (combatContext(actor)?.id ?? null)) {
+                warn('다른 전투의 카드입니다. 현재 전투의 카드를 사용하세요.');
+                return;
+              }
               const pcs = action.kind === 'stress' ? await selectPcs() : [];
               if (action.kind === 'stress' && !pcs?.length) return;
               const applied = await runCardAction(

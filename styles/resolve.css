@@ -11,9 +11,22 @@
 }
 .ncm-resolve-tools { justify-content: space-between; }
 .ncm-resolve-block.is-empty .ncm-resolve-tools { justify-content: flex-end; }
-.ncm-resolve-row { min-height: 30px; padding: 3px 4px; }
-.ncm-resolve-row > strong { flex: 0 0 28px; }
-.ncm-resolve-slots { flex: 1; flex-wrap: wrap; }
+/* dnd5e 6.1.1 NPC 시트의 HP 칸은 폭이 130px 남짓이라 한 줄에 다 넣지 않는다.
+   첫 줄: 이름 · 단계 · 조건 단추, 둘째 줄: 칸 원. */
+.ncm-resolve-block { margin-top: 10px; }
+.ncm-resolve-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "name stage cond" "slots slots slots";
+  column-gap: 6px;
+  row-gap: 3px;
+  min-height: 30px;
+  padding: 3px 4px;
+}
+.ncm-resolve-row > strong { grid-area: name; }
+.ncm-resolve-row > span { grid-area: stage; white-space: nowrap; }
+.ncm-resolve-row > button { grid-area: cond; }
+.ncm-resolve-slots { grid-area: slots; flex-wrap: wrap; gap: 4px; min-width: 0; }
 .ncm-resolve-row.is-shaken { background: #ffda6533; color: light-dark(#684900, #ffe08a); }
 .ncm-resolve-row.is-broken { background: #e2484833; color: light-dark(#8f1515, #ffaaaa); }
 .ncm-resolve-block button { width: auto; min-height: 24px; margin: 0; flex: 0 0 auto; }
@@ -36,9 +49,8 @@
 .ncm-resolve-card, .ncm-resolve-dialog { word-break: keep-all; overflow-wrap: anywhere; line-height: 1.55; }
 .ncm-resolve-card h3 { font-size: 16px; }
 .ncm-resolve-card-actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.ncm-resolve-card-actions button { flex: 1 1 140px; white-space: normal; }
+.ncm-resolve-card-actions button { flex: 1 1 140px; white-space: normal; text-transform: none; }
 @media (max-width: 600px) {
   .ncm-resolve-block .ncm-resolve-slot { width: 24px; height: 24px; min-height: 24px; }
-  .ncm-resolve-row { flex-wrap: wrap; }
   .ncm-resolve-dialog label { min-height: 44px; }
 }

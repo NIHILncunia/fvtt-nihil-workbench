@@ -69,8 +69,33 @@ export function readResolve(input) {
   };
 }
 
-export function combatContext(combat = globalThis.game?.combat) {
-  if (!combat?.started) return null;
+/** 비연결 액터는 토큰·장면으로, 연결된 액터는 액터 id로 참가 전투를 찾는다. */
+export function actorCombat(actor) {
+  if (!actor) return null;
+  const token = actor.token;
+  const sceneId = token?.parent?.id;
+  const participates = combat => {
+    if (!combat?.started) return false;
+    return Array.from(combat.combatants ?? []).some(entry => {
+      if (token && !token.actorLink) {
+        return sceneId != null && (combat.scene?.id ?? combat.sceneId) === sceneId && (entry.tokenId ?? entry.token?.id) === token.id;
+      }
+      return (entry.actorId ?? entry.actor?.id) === actor.id;
+    });
+  };
+  const current = globalThis.game?.combat;
+  if (participates(current)) return current;
+  return Array.from(globalThis.game?.combats ?? []).filter(participates).sort((
+    a,
+    b
+  ) => {
+    return (b._stats?.modifiedTime ?? 0) - (a._stats?.modifiedTime ?? 0) || a.id.localeCompare(b.id);
+  })[0] ?? null;
+}
+
+export function combatContext(actor) {
+  const combat = actorCombat(actor);
+  if (!combat) return null;
   return {
     id: combat.id,
     round: combat.round,
@@ -148,7 +173,7 @@ export async function saveResolve(
   if (events.length) {
     state.notices.push({
       id: globalThis.foundry.utils.randomID(),
-      combatId: combatContext()?.id ?? null,
+      combatId: combatContext(actor)?.id ?? null,
       events: events
     });
   }

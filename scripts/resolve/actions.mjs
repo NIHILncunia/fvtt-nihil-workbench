@@ -47,7 +47,7 @@ export async function changeActorResolve(
         state,
         profile,
         request,
-        combatContext()
+        combatContext(actor)
       );
       result.warnings.forEach(warn);
       if (result.changed) await saveResolve(
@@ -92,9 +92,9 @@ export async function rollDie(sides) {
 
 function enterMode(
   state,
-  mode
+  mode,
+  combat
 ) {
-  const combat = combatContext();
   state.mode = mode;
   state.type = null;
   state.rampageStart = mode === '폭주' ? combat?.round ?? null : null;
@@ -121,7 +121,7 @@ export async function runCardAction(
         profile
       } = readResolve(actor);
       const state = actor.type === 'npc' ? readResolve(actor).state : storedResolve(actor);
-      const combat = combatContext();
+      const combat = combatContext(actor);
       const record = actor.type === 'npc' ? encounterRecord(
         state,
         combat?.id
@@ -165,7 +165,8 @@ export async function runCardAction(
             );
             enterMode(
               state,
-              mode
+              mode,
+              combat
             );
             events.push({
               kind: mode,
