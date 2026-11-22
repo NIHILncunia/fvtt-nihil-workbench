@@ -74,6 +74,15 @@
         <div class="ncm-workbench__eyebrow">새 {{browser.activeTypeLabel}} 추가</div>
         <h2>{{#if creation.name}}{{creation.name}}{{else}}새 액터{{/if}}</h2>
       </div>
+      <div class="ncm-workbench__header-actions">
+        <button type="button" data-action="cancelActorCreation">취소</button>
+        {{#if creation.isSbi}}
+        <button type="button" data-action="validateSbiImport">사전 검사</button>
+        <button type="button" data-action="importSbi" class="ncm-workbench__save">임포트</button>
+        {{else}}
+        <button type="button" data-action="saveNewActor" class="ncm-workbench__save">생성</button>
+        {{/if}}
+      </div>
     </header>
     <div class="ncm-workbench__scroll ncm-actor-workbench__creation">
       <p class="ncm-workbench__notice">생성 위치: <strong>{{creation.folderName}}</strong></p>
@@ -93,19 +102,10 @@
         {{#if creation.sbiResult.imported}} 임포트 완료{{else}} 사전 검사 완료{{/if}}
       </div>
       {{/if}}
-      <div class="ncm-workbench__header-actions">
-        <button type="button" data-action="cancelActorCreation">취소</button>
-        <button type="button" data-action="validateSbiImport">사전 검사</button>
-        <button type="button" data-action="importSbi" class="ncm-workbench__save">임포트</button>
-      </div>
       {{else}}
       <div class="ncm-workbench__grid-2">
         <label>이름<input type="text" name="actorName" value="{{creation.name}}" required></label>
         <label>이미지 경로<input type="text" name="actorImg" value="{{creation.img}}"></label>
-      </div>
-      <div class="ncm-workbench__header-actions">
-        <button type="button" data-action="cancelActorCreation">취소</button>
-        <button type="button" data-action="saveNewActor" class="ncm-workbench__save">생성</button>
       </div>
       {{/if}}
     </div>

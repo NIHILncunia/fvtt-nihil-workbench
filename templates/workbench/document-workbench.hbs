@@ -1,5 +1,5 @@
 <div class="ncm-document-workbench__layout">
-  <header><h2>{{title}}</h2><p>{{help}}</p></header>
+  <header><div class="ncm-workbench__header-actions"><button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{submitLabel}}</button></div><h2>{{title}}</h2><p>{{help}}</p></header>
   <div class="ncm-document-workbench__fields">
     {{#each fields}}
     {{#if effectChanges}}
@@ -26,5 +26,4 @@
     {{/if}}
     {{/each}}
   </div>
-  <footer><button type="submit" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{submitLabel}}</button></footer>
 </div>

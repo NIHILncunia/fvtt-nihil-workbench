@@ -27,12 +27,13 @@
         <span class="ncm-workbench__eyebrow">{{#if isNew}}새 씬{{else}}씬 편집{{/if}}</span>
         <label class="ncm-scene-workbench__name">씬 이름<input type="text" name="sceneName" value="{{state.name}}" placeholder="배경을 고르면 그림 이름으로 채워집니다" {{#unless canEdit}}disabled{{/unless}}></label>
       </div>
-      {{#unless isNew}}
       <div class="ncm-workbench__header-actions">
+        {{#unless isNew}}
         <button type="button" data-action="viewScene"><i class="fa-solid fa-eye"></i> 씬 보기</button>
         <button type="button" data-action="deleteScene" class="danger" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-trash"></i> 씬 삭제</button>
+        {{/unless}}
+        <button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{#if isNew}}씬 만들기{{else}}씬 저장{{/if}}</button>
       </div>
-      {{/unless}}
     </header>
 
     <div class="ncm-workbench__scroll ncm-scene-workbench__body">
@@ -75,8 +76,5 @@
       </section>
     </div>
 
-    <footer class="ncm-scene-workbench__foot">
-      <button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{#if isNew}}씬 만들기{{else}}씬 저장{{/if}}</button>
-    </footer>
   </section>
 </div>

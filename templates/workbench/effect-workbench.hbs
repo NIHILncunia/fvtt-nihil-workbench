@@ -1,5 +1,6 @@
 <div class="ncm-document-workbench__layout ncm-effect-workbench">
   <header>
+    <div class="ncm-workbench__header-actions"><button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}>{{submitLabel}}</button></div>
     <h2>{{title}}</h2>
     <p>{{parentName}} · {{effectType}}</p>
     <p>{{help}}</p>
@@ -55,5 +56,4 @@
       </div>
     </fieldset>
   </div>
-  <footer><button type="submit" {{#unless canEdit}}disabled{{/unless}}>{{submitLabel}}</button></footer>
 </div>
