@@ -6,6 +6,7 @@ import {
   emptySceneState,
   gridFromColumns,
   readSceneState,
+  refreshSceneThumbnail,
   sceneCreateData,
   sceneLevelUpdate,
   sceneNameFromEntry,
@@ -230,9 +231,12 @@ export function getSceneWorkbenchClass() {
         }
         const level = scene.levels?.get?.(scene.initialLevel) ?? scene.levels?.contents?.[0];
         if (!level) throw new Error('씬의 레벨을 찾지 못해 배경을 넣지 못했습니다.');
+        const previousSrc = level.background?.src ?? null;
         await level.update(sceneLevelUpdate(this.draft.src));
+        const thumbResult = await refreshSceneThumbnail(scene, { levelId: level.id, previousSrc, nextSrc: this.draft.src });
         this.selectSceneById(scene.id);
         globalThis.ui?.notifications?.info?.(`「${scene.name}」 씬을 저장했습니다.`);
+        if (thumbResult.reason) globalThis.ui?.notifications?.warn?.(`목록 썸네일을 만들지 못했습니다: ${thumbResult.reason}`);
         await this.render({ force: true });
       } catch (error) {
         globalThis.ui?.notifications?.error?.(error.message);

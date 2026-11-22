@@ -131,3 +131,24 @@ export function sceneNameFromEntry(entry) {
   const file = String(entry?.url ?? '').split('/').pop() ?? '';
   return file.replace(/\.[^.]+$/, '');
 }
+
+// 씬 디렉터리 썸네일(2026-11-22). 코어는 씬을 만들 때 첫 레벨에 배경이 있어야 썸네일을 만들고,
+// 씬 설정 창은 썸네일이 없을 때만 만든다. 워크벤치는 씬을 만든 뒤 레벨 배경을 따로 넣으므로 직접 만든다.
+// 썸네일이 없거나 배경이 바뀌었을 때만 다시 만든다. 실패해도 씬 저장은 그대로 두고 이유만 돌려준다.
+export function needsSceneThumbnail({ thumb, previousSrc, nextSrc }) {
+  if (!nextSrc) return false;
+  return !thumb || previousSrc !== nextSrc;
+}
+
+export async function refreshSceneThumbnail(scene, { levelId = null, previousSrc = null, nextSrc = null, force = false } = {}) {
+  if (!scene?.createThumbnail) return { updated: false, reason: '씬 썸네일 기능이 없습니다.' };
+  if (!force && !needsSceneThumbnail({ thumb: scene.thumb, previousSrc, nextSrc })) return { updated: false, reason: null };
+  try {
+    const { thumb } = await scene.createThumbnail(levelId ? { level: levelId } : {});
+    if (!thumb) return { updated: false, reason: '썸네일 결과가 비었습니다.' };
+    await scene.update({ thumb });
+    return { updated: true, reason: null };
+  } catch (error) {
+    return { updated: false, reason: error?.message ?? String(error) };
+  }
+}

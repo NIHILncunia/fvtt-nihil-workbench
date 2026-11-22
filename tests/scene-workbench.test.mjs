@@ -84,3 +84,28 @@ test('scene workbench template renders new and existing scene states', async () 
   assert.match(existing, /name="sceneGlobalLight" checked/);
   assert.match(existing, /is-selected/);
 });
+
+test('scene thumbnails are made when missing or when the background changes', async () => {
+  const { needsSceneThumbnail, refreshSceneThumbnail } = await import('../scripts/workbench/scene-fields.mjs');
+  assert.equal(needsSceneThumbnail({ thumb: null, previousSrc: null, nextSrc: 'a.webp' }), true);
+  assert.equal(needsSceneThumbnail({ thumb: 't.webp', previousSrc: 'a.webp', nextSrc: 'a.webp' }), false);
+  assert.equal(needsSceneThumbnail({ thumb: 't.webp', previousSrc: 'a.webp', nextSrc: 'b.webp' }), true);
+  assert.equal(needsSceneThumbnail({ thumb: null, previousSrc: null, nextSrc: '' }), false);
+
+  const calls = [];
+  const scene = {
+    thumb: null,
+    async createThumbnail(options) { calls.push(['create', options]); return { thumb: 'data:image/webp;base64,AAAA' }; },
+    async update(data) { calls.push(['update', data]); },
+  };
+  assert.deepEqual(await refreshSceneThumbnail(scene, { levelId: 'L1', previousSrc: null, nextSrc: 'a.webp' }), { updated: true, reason: null });
+  assert.deepEqual(calls, [['create', { level: 'L1' }], ['update', { thumb: 'data:image/webp;base64,AAAA' }]]);
+
+  scene.thumb = 'worlds/x/assets/scenes/s-thumb.webp';
+  calls.length = 0;
+  assert.deepEqual(await refreshSceneThumbnail(scene, { levelId: 'L1', previousSrc: 'a.webp', nextSrc: 'a.webp' }), { updated: false, reason: null });
+  assert.equal(calls.length, 0);
+
+  const failing = { thumb: null, async createThumbnail() { throw new Error('CORS'); }, async update() { throw new Error('never'); } };
+  assert.deepEqual(await refreshSceneThumbnail(failing, { nextSrc: 'a.webp' }), { updated: false, reason: 'CORS' });
+});
