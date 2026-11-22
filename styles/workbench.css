@@ -515,6 +515,39 @@
 .ncm-gallery__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--ncm-border); background: rgba(35, 31, 25, .96); color: var(--ncm-muted); font-size: 12px; }
 .ncm-gallery__footer strong { color: var(--ncm-text); font-variant-numeric: tabular-nums; }
 .ncm-gallery-app .window-content .ncm-gallery__footer button { width: auto; }
+
+/* 아이콘은 이름 줄 없이 정사각 칸으로 놓고 선택 정보는 아래에 모은다. */
+.ncm-gallery-app .window-content .ncm-gallery__bar > button { flex: 0 0 auto; width: auto; }
+.ncm-gallery__icon-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 0; }
+.ncm-gallery__categories { overflow: auto; padding: 12px 8px; border-right: 1px solid var(--ncm-border); }
+.ncm-gallery__categories ul { margin: 0; padding: 0; list-style: none; }
+.ncm-gallery__categories ul ul { padding-left: 14px; }
+.ncm-gallery-app .window-content .ncm-gallery__categories button { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; height: auto; min-height: 32px; padding: 5px 8px; border: 0; border-radius: 3px; background: transparent; color: var(--ncm-text); text-align: left; }
+.ncm-gallery__categories button span { color: var(--ncm-muted); font-variant-numeric: tabular-nums; }
+.ncm-gallery-app .window-content .ncm-gallery__categories button.is-active,
+.ncm-gallery-app .window-content .ncm-gallery__tags button.is-active { background: #454037; box-shadow: inset 3px 0 var(--ncm-gold); }
+.ncm-gallery__icon-main { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+.ncm-gallery__icon-main > .ncm-gallery__body { grid-row: 3; }
+.ncm-gallery__tags { display: flex; flex-wrap: wrap; gap: 5px; max-height: 112px; overflow: auto; padding: 10px 16px; }
+.ncm-gallery-app .window-content .ncm-gallery__tags button { width: auto; height: auto; min-height: 28px; padding: 3px 8px; border: 1px solid var(--ncm-border); border-radius: 4px; color: var(--ncm-text); background: var(--ncm-panel); font-size: 12px; }
+.ncm-gallery__notice { grid-row: 2; margin: 0; padding: 0 16px; color: var(--ncm-muted); font-size: 12px; }
+.ncm-gallery__grid.is-icon { grid-template-columns: repeat(auto-fill, 68px); gap: 8px; }
+.ncm-gallery-app .window-content .ncm-gallery__icon { display: grid; place-items: center; width: 68px; height: 68px; min-height: 68px; padding: 4px; border: 2px solid transparent; border-radius: 4px; background: #515151; cursor: pointer; }
+.ncm-gallery__icon img { width: 100%; height: 100%; min-height: 0; object-fit: contain; border: 0; }
+.ncm-gallery__icon[hidden] { display: none !important; }
+.ncm-gallery-app .window-content .ncm-gallery__icon.is-current { border-color: #d4c8ad; }
+.ncm-gallery-app .window-content .ncm-gallery__icon.is-selected,
+.ncm-gallery-app .window-content .ncm-gallery__icon:focus-visible { border-color: var(--ncm-gold); outline: 2px solid var(--ncm-gold); outline-offset: 1px; }
+.ncm-gallery__icon-footer { flex-wrap: wrap; }
+.ncm-gallery__selection { display: grid; flex: 1 1 200px; gap: 2px; min-width: 0; max-height: 80px; overflow: auto; overflow-wrap: anywhere; }
+.ncm-gallery__selection small { color: var(--ncm-muted); font-size: 12px; }
+.ncm-gallery__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ncm-gallery__picker-icons { flex: 0 0 auto; }
+@media (max-width: 640px) {
+  .ncm-gallery__icon-layout { grid-template-columns: 144px minmax(0, 1fr); }
+  .ncm-gallery-app .window-content .ncm-gallery__categories button,
+  .ncm-gallery-app .window-content .ncm-gallery__tags button { min-height: 44px; }
+}
 .ncm-actor-workbench__image-field > img[data-action] { cursor: pointer; }
 .ncm-actor-workbench__image-field > img[data-action]:hover { outline: 1px solid var(--ncm-gold); }
 

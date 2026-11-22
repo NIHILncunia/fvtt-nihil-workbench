@@ -1,0 +1,81 @@
+<div class="ncm-gallery ncm-gallery--icons">
+  <header class="ncm-gallery__bar">
+    <div class="ncm-gallery__title">
+      <h2>아이콘</h2>
+      {{#if targetLabel}}<small>{{targetLabel}}</small>{{/if}}
+    </div>
+    <button type="button" data-action="switchGallery">정사각 설정화</button>
+    <div class="ncm-gallery__filters">
+      {{#unless needsToken}}<input type="search" data-gallery-search value="{{search}}" placeholder="이름·태그로 조회" aria-label="아이콘 조회">{{/unless}}
+      <button type="button" data-action="refresh" title="목록 다시 받기" aria-label="목록 다시 받기"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+  </header>
+
+  {{#if needsToken}}
+  <div class="ncm-gallery__body">
+    <form class="ncm-gallery__token" onsubmit="return false">
+      <h3>기록보관소 이미지 토큰</h3>
+      <p>조회 전용 토큰을 한 번 입력하면 이 브라우저에 저장됩니다.</p>
+      {{#if error}}<p class="ncm-gallery__error">{{error}}</p>{{/if}}
+      <label>토큰<input type="password" data-gallery-token autocomplete="off" placeholder="토큰 붙여넣기"></label>
+      <button type="button" data-action="saveToken">저장하고 목록 받기</button>
+    </form>
+  </div>
+  {{else if error}}
+  <div class="ncm-gallery__state">
+    <p class="ncm-gallery__error">{{error}}</p>
+    <button type="button" data-action="refresh">다시 시도</button>
+  </div>
+  {{else if loading}}
+  <div class="ncm-gallery__state"><p>목록을 받는 중입니다.</p></div>
+  {{else}}
+  <div class="ncm-gallery__icon-layout">
+    <nav class="ncm-gallery__categories" aria-label="분류 조회">
+      <button type="button" data-action="category" data-category="" class="{{#if allCategories}}is-active{{/if}}" aria-pressed="{{allCategories}}">전체 <span>({{categoryTotal}})</span></button>
+      <ul>
+        {{#each categories}}
+        <li>
+          <button type="button" data-action="category" data-category="{{key}}" class="{{#if active}}is-active{{/if}}" aria-pressed="{{active}}">{{name}} <span>({{count}})</span></button>
+          {{#if children}}
+          <ul>
+            {{#each children}}
+            <li><button type="button" data-action="category" data-category="{{key}}" class="{{#if active}}is-active{{/if}}" aria-pressed="{{active}}">{{name}} <span>({{count}})</span></button></li>
+            {{/each}}
+          </ul>
+          {{/if}}
+        </li>
+        {{/each}}
+      </ul>
+    </nav>
+    <main class="ncm-gallery__icon-main">
+      <div class="ncm-gallery__tags" aria-label="태그 조회">
+        {{#each tags}}<button type="button" data-action="tag" data-tag="{{name}}" class="{{#if active}}is-active{{/if}}" aria-pressed="{{active}}">{{name}} <span>({{count}})</span></button>{{/each}}
+      </div>
+      {{#if categoryWarning}}<p class="ncm-gallery__notice">{{categoryWarning}}</p>{{/if}}
+      <div class="ncm-gallery__body">
+        <div class="ncm-gallery__grid is-icon" data-icon-grid>
+          {{#each entries}}
+          <button type="button" class="ncm-gallery__icon {{#if current}}is-current{{/if}} {{#if selected}}is-selected{{/if}}" data-action="choose" data-entry-id="{{id}}" title="{{name}}" aria-label="{{name}}" aria-pressed="{{selected}}">
+            <img src="{{url}}" alt="" loading="lazy" decoding="async">
+          </button>
+          {{/each}}
+        </div>
+        <p class="ncm-gallery__state" data-gallery-empty hidden>조건에 맞는 아이콘이 없습니다.</p>
+      </div>
+    </main>
+  </div>
+  {{/if}}
+
+  <footer class="ncm-gallery__footer ncm-gallery__icon-footer">
+    <div class="ncm-gallery__selection" aria-live="polite">
+      <strong data-icon-name>아이콘을 선택하십시오.</strong>
+      <span data-icon-category></span>
+      <small data-icon-tags></small>
+    </div>
+    <span>{{#unless needsToken}}조회 결과 <strong data-gallery-count>{{total}}</strong> / {{total}}장{{/unless}}</span>
+    <div class="ncm-gallery__buttons">
+      {{#if canPickLocal}}<button type="button" data-action="pickLocal">로컬 파일에서 선택</button>{{/if}}
+      <button type="button" data-action="applyIcon" disabled>이 아이콘 쓰기</button>
+    </div>
+  </footer>
+</div>

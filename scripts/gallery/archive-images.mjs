@@ -25,10 +25,14 @@ export const GALLERY_KINDS = Object.freeze({
       { id: 'landscape', label: '풍경', area: 'lndscp', role: '' },
     ],
   },
-  // 아이템 아이콘은 물건의 정사각 설정화(1254×1254)만 쓴다(2026-11-21 마스터 결정, 이미지 규칙 2026-11-12).
+  // 기존 아이템 갈래는 물건의 정사각 설정화(1254×1254)를 유지한다.
   item: {
     title: '아이템 아이콘',
     sources: [{ id: 'item', label: '정사각 설정화', area: 'concept', role: '정사각 설정화' }],
+  },
+  icon: {
+    title: '아이콘',
+    sources: [{ id: 'icon', area: 'icon', role: '' }],
   },
 });
 
@@ -68,8 +72,31 @@ export function imageSubjectName(item) {
 
 // API 항목 → 갤러리 카드. 올라가지 않았거나(주소 없음) 사용 안 함 표시가 된 그림은 뺀다.
 // 크리처와 연결되지 않은 캐릭터 그림(정체 미상 NPC 기본 포트 등)은 폴더 이름을 카드 이름으로 쓴다(2026-11-21).
-export function galleryEntry(item, source) {
+export function galleryEntry(
+  item,
+  source,
+) {
   if (!item?.url || item.use === 'N') return null;
+  if (source.area === 'icon') {
+    const name = item.iconName || baseName(item.fileName || item.path || item.url.split('?')[0]) || item.imageId;
+    const category = String(item.category ?? '');
+    const categoryName = String(item.categoryName ?? '');
+    const tags = [...new Set((Array.isArray(item.tags) ? item.tags : []).filter((tag) => typeof tag === 'string' && tag))];
+    return {
+      id: `${source.id}:${item.imageId}`,
+      gallerySource: source.id,
+      source: item.source ?? '',
+      url: item.url,
+      name,
+      group: category,
+      category,
+      categoryName,
+      tags,
+      width: item.width ?? null,
+      height: item.height ?? null,
+      search: [name, categoryName, category, ...tags].join(' ').toLowerCase(),
+    };
+  }
   const creature = item.creature ?? null;
   const fileName = baseName(item.path);
   const subjectName = source.area === 'char' || source.area === 'concept' ? imageSubjectName(item) : fileName;
@@ -102,7 +129,7 @@ export function galleryEntry(item, source) {
 export function filterEntries(entries, { source = null, search = '', group = '' } = {}) {
   const words = String(search).toLowerCase().split(/\s+/).filter(Boolean);
   return entries.filter((entry) =>
-    (!source || entry.source === source)
+    (!source || (entry.gallerySource ?? entry.source) === source)
     && (!group || entry.group === group)
     && words.every((word) => entry.search.includes(word)));
 }
@@ -165,29 +192,67 @@ export function clearImageCache() {
   cache.clear();
 }
 
-async function fetchSource(source, token, fetcher) {
-  const entries = [];
-  for (let page = 1; page <= 20; page += 1) {
-    let response;
-    try {
-      response = await fetcher(imageQuery({ area: source.area, role: source.role, page }), {
+async function fetchArchive(
+  url,
+  token,
+  fetcher,
+) {
+  let response;
+  try {
+    response = await fetcher(
+      url,
+      {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
-      });
-    } catch {
-      throw new ArchiveImageError('NETWORK', '기록보관소에 연결하지 못했습니다. 네트워크를 확인하고 다시 시도하십시오.');
-    }
-    if (response.status === 401 || response.status === 403)
-      throw new ArchiveImageError('AUTH', '기록보관소 이미지 토큰이 맞지 않습니다. 토큰을 다시 입력하십시오.');
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      throw new ArchiveImageError('RESPONSE', '기록보관소 응답을 읽지 못했습니다.');
-    }
-    if (!response.ok || body?.error) throw new ArchiveImageError('RESPONSE', body?.message ?? '이미지 목록을 받지 못했습니다.');
+      },
+    );
+  } catch {
+    throw new ArchiveImageError(
+      'NETWORK',
+      '기록보관소에 연결하지 못했습니다. 네트워크를 확인하고 다시 시도하십시오.',
+    );
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new ArchiveImageError(
+      'AUTH',
+      '기록보관소 이미지 토큰이 맞지 않습니다. 토큰을 다시 입력하십시오.',
+    );
+  }
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    throw new ArchiveImageError(
+      'RESPONSE',
+      '기록보관소 응답을 읽지 못했습니다.',
+    );
+  }
+  if (!response.ok || body?.error) {
+    throw new ArchiveImageError(
+      'RESPONSE',
+      body?.message ?? '이미지 목록을 받지 못했습니다.',
+    );
+  }
+  return body;
+}
+
+async function fetchSource(
+  source,
+  token,
+  fetcher,
+) {
+  const entries = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const body = await fetchArchive(
+      imageQuery({ area: source.area, role: source.role, page }),
+      token,
+      fetcher,
+    );
     for (const item of body.data?.items ?? []) {
-      const entry = galleryEntry(item, source);
+      const entry = galleryEntry(
+        item,
+        source,
+      );
       if (entry) entries.push(entry);
     }
     if (page >= (body.data?.pages ?? 1)) break;
@@ -195,14 +260,188 @@ async function fetchSource(source, token, fetcher) {
   return entries;
 }
 
+// 분류표의 응답 차이는 입구에서 흡수하고 화면에서는 같은 두 단계 구조를 쓴다.
+export function normalizeIconCategories(payload) {
+  const data = payload?.data ?? payload;
+  const items = Array.isArray(data) ? data : (data?.items ?? data?.categories ?? []);
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((item) => {
+    const key = String(item?.key ?? item?.categoryKey ?? '').trim().replace(
+      /^\/+|\/+$/g,
+      '',
+    );
+    if (!key || key.split('/').length > 2) return [];
+    const rawCount = item.count ?? item.iconCount;
+    const count = rawCount === null || rawCount === undefined || rawCount === '' ? null : Number(rawCount);
+    return [{
+      key,
+      name: String(item.name ?? item.categoryName ?? key.split('/').pop()),
+      order: Number(item.order ?? item.sortOrder ?? item.sortSeq) || 0,
+      parent: key.includes('/') ? key.split('/')[0] : String(item.parent ?? item.parentKey ?? ''),
+      count: Number.isFinite(count) && count >= 0 ? count : null,
+    }];
+  });
+}
+
+const ICON_CATEGORY_NAMES = Object.freeze({ weapons: '무기', creatures: '생물', magic: '마법', skills: '기술', system: '시스템' });
+
+export function iconCategoryMatches(
+  entry,
+  category,
+) {
+  return !category || entry.category === category || entry.category?.startsWith(`${category}/`);
+}
+
+export function iconCategoryTree(
+  categories = [],
+  entries = [],
+) {
+  const nodes = new Map(categories.map((category) => [category.key, { ...category, children: [] }]));
+  const ensure = (
+    key,
+    name,
+  ) => {
+    if (nodes.has(key)) return;
+    nodes.set(
+      key,
+      {
+        key,
+        name: name || ICON_CATEGORY_NAMES[key] || key.split('/').pop(),
+        order: 0,
+        count: null,
+        children: [],
+      },
+    );
+  };
+  for (const entry of entries) {
+    if (!entry.category) continue;
+    ensure(
+      entry.category,
+      entry.categoryName,
+    );
+  }
+  for (const key of [...nodes.keys()]) ensure(key.split('/')[0]);
+  for (const node of nodes.values()) {
+    if (node.key.includes('/')) nodes.get(node.key.split('/')[0]).children.push(node);
+  }
+  // 하위 수를 먼저 채워, 표에 부모 행이 없어도 부모 합계를 얻는다.
+  const leaves = [...nodes.values()].filter((node) => !node.children.length);
+  const parents = [...nodes.values()].filter((node) => node.children.length);
+  for (const node of [...leaves, ...parents]) {
+    if (node.count === null || node.count === undefined) {
+      node.count = node.children.length
+        ? node.children.reduce(
+          (
+            sum,
+            child,
+          ) => sum + child.count,
+          entries.filter((entry) => entry.category === node.key).length,
+        )
+        : entries.filter((entry) => entry.category === node.key).length;
+    }
+  }
+  const compare = (
+    a,
+    b,
+  ) => a.order - b.order || a.name.localeCompare(
+    b.name,
+    'ko',
+  );
+  const roots = [...nodes.values()].filter((node) => !node.key.includes('/')).sort(compare);
+  for (const root of roots) root.children.sort(compare);
+  return roots;
+}
+
+export function filterIconEntries(
+  entries,
+  { category = '', tags = [], search = '' } = {},
+) {
+  const words = String(search).toLowerCase().split(/\s+/).filter(Boolean);
+  return entries.filter((entry) => iconCategoryMatches(
+    entry,
+    category,
+  ) && tags.every((tag) => entry.tags.includes(tag))
+    && words.every((word) => entry.search.includes(word)));
+}
+
+export function iconTags(entries) {
+  const counts = new Map();
+  for (const entry of entries) {
+    for (const tag of new Set(entry.tags)) counts.set(
+      tag,
+      (counts.get(tag) ?? 0) + 1,
+    );
+  }
+  return [...counts].sort((
+    [a],
+    [b],
+  ) => a.localeCompare(
+    b,
+    'ko',
+  )).map(([name, count]) => ({ name, count }));
+}
+
+export function sameImagePath(
+  first,
+  second,
+) {
+  const withoutVersion = (value) => String(value ?? '')
+    .replace(
+      /([?&])v=[^&#]*&?/g,
+      '$1',
+    )
+    .replace(
+      /\?&/g,
+      '?',
+    )
+    .replace(
+      /[?&](?=#|$)/g,
+      '',
+    );
+  return Boolean(first && second) && withoutVersion(first) === withoutVersion(second);
+}
+
+export async function loadIconCategories({ force = false, token = readImageToken(), fetcher = globalThis.fetch?.bind(globalThis), now = Date.now() } = {}) {
+  if (!token) throw new ArchiveImageError(
+    'TOKEN',
+    '기록보관소 이미지 토큰을 입력하십시오.',
+  );
+  const cached = cache.get('icon-categories');
+  if (!force && cached && cached.token === token && now - cached.at < CACHE_MS) return cached.categories;
+  const body = await fetchArchive(
+    `${ARCHIVE_API_URL}/images/icon-categories`,
+    token,
+    fetcher,
+  );
+  const categories = normalizeIconCategories(body);
+  cache.set(
+    'icon-categories',
+    { token, at: now, categories },
+  );
+  return categories;
+}
+
 // 종류에 맞는 모든 갈래의 목록을 받는다. 같은 종류는 5분 동안 다시 받지 않는다.
-export async function loadGalleryEntries(kind, { force = false, token = readImageToken(), fetcher = globalThis.fetch?.bind(globalThis), now = Date.now() } = {}) {
-  if (!token) throw new ArchiveImageError('TOKEN', '기록보관소 이미지 토큰을 입력하십시오.');
+export async function loadGalleryEntries(
+  kind,
+  { force = false, token = readImageToken(), fetcher = globalThis.fetch?.bind(globalThis), now = Date.now() } = {},
+) {
+  if (!token) throw new ArchiveImageError(
+    'TOKEN',
+    '기록보관소 이미지 토큰을 입력하십시오.',
+  );
   const cached = cache.get(kind);
   if (!force && cached && now - cached.at < CACHE_MS && cached.token === token) return cached.entries;
   const config = galleryKind(kind);
-  const lists = await Promise.all(config.sources.map((source) => fetchSource(source, token, fetcher)));
+  const lists = await Promise.all(config.sources.map((source) => fetchSource(
+    source,
+    token,
+    fetcher,
+  )));
   const entries = sortEntries(lists.flat());
-  cache.set(kind, { at: now, token, entries });
+  cache.set(
+    kind,
+    { at: now, token, entries },
+  );
   return entries;
 }

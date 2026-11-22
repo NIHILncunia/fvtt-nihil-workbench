@@ -1,4 +1,5 @@
-import { openImageGallery } from './gallery/image-gallery-app.mjs';
+import { openImageGallery, openIconGallery } from './gallery/image-gallery-app.mjs';
+import { registerFilePickerIconHooks } from './gallery/file-picker-icons.mjs';
 import { registerGallerySettings } from './gallery/archive-images.mjs';
 import { isWorkbenchUser } from './shared/workbench-access.mjs';
 import { openStatblockImporter } from './statblock-importer/importer.mjs';
@@ -52,6 +53,7 @@ function registerApi() {
     openWorkbenchLauncher,
     openCompendiumWorkbench,
     openImageGallery,
+    openIconGallery,
     openSceneWorkbench,
     openResourceManager,
     content,
@@ -389,6 +391,7 @@ function patchActorDirectoryContextMenu() {
 }
 
 registerApi();
+registerFilePickerIconHooks();
 registerContextHook();
 registerActorContextHook();
 registerItemDirectoryRenderHook();
@@ -398,6 +401,7 @@ registerWorkbenchDocumentSyncHooks();
 patchItemDirectoryContextMenu();
 patchActorDirectoryContextMenu();
 globalThis.Hooks?.once?.('init', () => {
+  registerFilePickerIconHooks();
   registerGallerySettings();
   registerSecretHp();
   registerTokenPortraitDefault();
@@ -413,6 +417,7 @@ globalThis.Hooks?.once?.('init', () => {
   registerWorkbenchDocumentSyncHooks();
 });
 globalThis.Hooks?.once?.('ready', () => {
+  registerFilePickerIconHooks();
   registerApi();
   patchSceneDirectoryContextMenu();
   patchItemDirectoryContextMenu();

@@ -5,6 +5,7 @@
       <h2>{{title}}</h2>
       {{#if targetLabel}}<small>{{targetLabel}}</small>{{/if}}
     </div>
+    {{#if canOpenIcons}}<button type="button" data-action="switchGallery">아이콘</button>{{/if}}
     {{#if hasTabs}}
     <nav class="ncm-gallery__tabs" aria-label="이미지 갈래">
       {{#each sources}}
