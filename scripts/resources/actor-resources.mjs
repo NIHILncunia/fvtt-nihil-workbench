@@ -64,6 +64,18 @@ export async function saveActorResourceStore(
   resources
 ) {
   assertGameMaster();
+  // 모든 자원 조작이 지나는 한 곳에서 검은 광기의 스트레스만 보호한다.
+  if (actor.getFlag(
+    MODULE_ID,
+    'resolve'
+  )?.pc?.kind === '검은 광기') {
+    const stress = getSortedResourceDefinitions().find(definition => definition.name === '스트레스');
+    const previous = getActorResourceStore(actor);
+    if (stress && resources[stress.id]?.value !== previous[stress.id]?.value) {
+      globalThis.ui?.notifications?.warn(`${actor.name}: 검은 광기 중에는 스트레스가 변하지 않습니다.`);
+      return false;
+    }
+  }
   await actor.setFlag(
     MODULE_ID,
     FLAGS.ACTOR_RESOURCES,
@@ -95,6 +107,7 @@ export async function setActorResourceValue(
 
   const resources = getActorResourceStore(actor);
   resources[resourceId] = {
+    ...resources[resourceId],
     value: clampResourceValue(
       definition,
       value
@@ -109,7 +122,8 @@ export async function setActorResourceValue(
 export async function adjustActorResourceValue(
   actor,
   resourceId,
-  amount
+  amount,
+  { countScene = false } = {}
 ) {
   assertGameMaster();
 
@@ -122,11 +136,19 @@ export async function adjustActorResourceValue(
     resources[resourceId]
   );
   resources[resourceId] = {
+    ...resources[resourceId],
     value: clampResourceValue(
       definition,
       current.value + Number(amount || 0)
     )
   };
+  if (countScene && definition.name === '스트레스') {
+    resources[resourceId].sceneIncrease = (resources[resourceId].sceneIncrease ?? 0)
+      + Math.max(
+        0,
+        resources[resourceId].value - current.value
+      );
+  }
   await saveActorResourceStore(
     actor,
     resources
@@ -145,7 +167,8 @@ export async function adjustResourceForActors(
       .map(actor => adjustActorResourceValue(
         actor,
         resourceId,
-        amount
+        amount,
+        { countScene: true }
       ))
   );
 }
@@ -225,12 +248,32 @@ export function getResourceStatusRows(resourceId) {
       name: actor.name,
       value: entry.value,
       max: definition.max,
+      isStress: definition.name === '스트레스',
+      sceneRemaining: Math.max(
+        0,
+        10 - (resources[resourceId]?.sceneIncrease ?? 0)
+      ),
       percent: getResourcePercent(
         entry.value,
         definition.max
       )
     };
   });
+}
+
+export async function resetStressScene(actors = getPcActors()) {
+  assertGameMaster();
+  const stress = getSortedResourceDefinitions().find(definition => definition.name === '스트레스');
+  if (!stress) return;
+  for (const actor of actors) {
+    const resources = getActorResourceStore(actor);
+    if (!resources[stress.id]) continue;
+    resources[stress.id].sceneIncrease = 0;
+    await saveActorResourceStore(
+      actor,
+      resources,
+    );
+  }
 }
 
 export function getManagedActorRows() {

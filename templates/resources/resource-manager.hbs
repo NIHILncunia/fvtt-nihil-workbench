@@ -102,6 +102,9 @@
         </div>
 
         <div class="lrm-bulk-card">
+            {{#if isStress}}
+            <button type="button" data-action="new-stress-scene">새 장면</button>
+            {{/if}}
             <div>
                 <p class="lrm-kicker">BULK ADJUSTMENT</p>
                 <strong>관리 대상 PC 일괄 증감</strong>
@@ -132,6 +135,7 @@
                     <tr data-actor-uuid="{{uuid}}">
                         <td><strong>{{name}}</strong></td>
                         <td class="lrm-value-cell">
+                            {{#if isStress}}<small>이번 장면 남은 오름 {{sceneRemaining}}/10</small>{{/if}}
                             <span>{{value}} / {{max}}</span>
                             <div class="lrm-resource-bar" style="--resource-percent: {{percent}}%;">
                                 <div class="lrm-resource-bar-fill"></div>

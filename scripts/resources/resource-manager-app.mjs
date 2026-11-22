@@ -18,6 +18,7 @@ import {
   getManagedActors,
   getManagedActorUuids,
   getResourceStatusRows,
+  resetStressScene,
   saveManagedActorUuids,
   setActorResourceValue,
   synchronizeAllActorResources
@@ -91,6 +92,7 @@ export function getResourceManagerAppClass() {
       selectedResourceId: this.selectedResourceId,
       statusRows,
       hasStatusRows: statusRows.length > 0,
+      isStress: selectedResource?.name === '스트레스',
       adjustments: RESOURCE_ADJUSTMENTS,
       managedActorRows,
       managedActorCount: getManagedActorUuids().length
@@ -135,6 +137,14 @@ export function getResourceManagerAppClass() {
   #bindStatusTab() {
     const panel = this.element.querySelector("[data-resource-status]");
     if ( !panel ) return;
+    panel.querySelector("[data-action='new-stress-scene']")?.addEventListener(
+      "click",
+      async () => {
+        if (!this.#assertGameMaster()) return;
+        await resetStressScene();
+        await this.#render();
+      }
+    );
 
     panel.querySelector("[name='selectedResourceId']")
       ?.addEventListener("change", event => {

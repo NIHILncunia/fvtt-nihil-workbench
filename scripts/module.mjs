@@ -24,6 +24,7 @@ import { canUseSceneWorkbench, openSceneWorkbench } from './workbench/scene-work
 import { examples } from './content/examples/ranged-fire.mjs';
 import { injectSettingsResourceButton, openResourceManager, registerResourceManager } from './resources/index.mjs';
 import { registerSecretHp } from './secret-hp/secret-hp.mjs';
+import { registerResolve } from './resolve/index.mjs';
 import { registerTokenPortraitDefault } from './shared/token-portrait-default.mjs';
 
 const MODULE_ID = 'nihil-compendium-module';
@@ -401,6 +402,7 @@ globalThis.Hooks?.once?.('init', () => {
   registerSecretHp();
   registerTokenPortraitDefault();
   registerResourceManager();
+  registerResolve();
   registerSceneHooks();
   registerApi();
   registerContextHook();
