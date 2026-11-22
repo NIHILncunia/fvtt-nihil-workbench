@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import Handlebars from 'handlebars';
 
 const MODULE_URL = new URL('../scripts/workbench/actor-workbench-app.mjs', import.meta.url);
 const ACTOR_WORKBENCH_PATH = new URL('../scripts/workbench/actor-workbench-app.mjs', import.meta.url);
@@ -355,6 +356,190 @@ async function withWorkbench(run) {
     );
   }
 }
+
+test(
+  'Actor browser defaults and invalid types fall back to All in state and model',
+  async () => {
+    const { ActorWorkbenchState, buildActorBrowserModel } = await loadActorWorkbench();
+    assert.equal(
+      new ActorWorkbenchState().activeType,
+      'all',
+    );
+    assert.equal(
+      buildActorBrowserModel().activeType,
+      'all',
+    );
+    const actors = [
+      actor({ id: 'pc', type: 'character', name: '기사' }),
+      actor({ id: 'npc', type: 'npc', name: '곰' }),
+      actor({ id: 'vehicle', type: 'vehicle', name: '마차' }),
+    ];
+    for (const activeType of [undefined, null, '', 'vehicle']) {
+      const state = new ActorWorkbenchState({ activeType });
+      assert.equal(
+        state.activeType,
+        'all',
+      );
+      state.selectActorType('npc');
+      assert.equal(
+        state.selectActorType(activeType),
+        'all',
+      );
+      const browser = buildActorBrowserModel({ actors, activeType });
+      assert.equal(
+        browser.activeType,
+        'all',
+      );
+      assert.equal(
+        browser.activeTypeLabel,
+        '전체',
+      );
+      assert.equal(
+        browser.isAll,
+        true,
+      );
+      assert.deepEqual(
+        browser.rows.map((row) => row.id).sort(),
+        ['npc', 'pc'],
+      );
+      assert.deepEqual(
+        browser.typeTabs.filter((tab) => tab.selected).map((tab) => tab.value),
+        ['all'],
+      );
+    }
+  },
+);
+
+test(
+  'Actor type actions keep rendered pressed state, heading and rows in sync after every render',
+  async () => {
+    const render = Handlebars.compile(await readFile(
+      new URL(
+        '../templates/workbench/actor-workbench.hbs',
+        import.meta.url,
+      ),
+      'utf8',
+    ));
+    await withWorkbench(
+      async (workbench) => {
+        workbench.cancelActorCreation();
+        globalThis.game.actors.set(
+          'pc',
+          actor({ id: 'pc', type: 'character', name: '기사' }),
+        );
+        globalThis.game.actors.set(
+          'npc',
+          actor({ id: 'npc', type: 'npc', name: '곰' }),
+        );
+        const selectType = workbench.constructor.DEFAULT_OPTIONS.actions.selectActorType;
+        for (const [type, label, ids] of [
+          ['all', '전체', ['npc', 'pc']],
+          ['character', 'PC', ['pc']],
+          ['npc', 'NPC', ['npc']],
+          ['all', '전체', ['npc', 'pc']],
+        ]) {
+          await selectType.call(
+            workbench,
+            { preventDefault() {} },
+            { dataset: { actorType: type } },
+          );
+          for (let pass = 0; pass < 2; pass++) {
+            const context = await workbench._prepareContext({});
+            const html = render(context);
+            const tabs = [...html.matchAll(/<button\b[^>]*data-action="selectActorType"[^>]*>/g)]
+              .map(([tag]) => ({
+                type: tag.match(/data-actor-type="([^"]+)"/)[1],
+                selected: /class="is-selected"/.test(tag),
+                pressed: /aria-pressed="true"/.test(tag),
+                released: /aria-pressed="false"/.test(tag),
+              }));
+            assert.equal(
+              tabs.length,
+              3,
+            );
+            for (const tab of tabs) {
+              assert.equal(
+                tab.selected,
+                tab.type === type,
+              );
+              assert.equal(
+                tab.pressed,
+                tab.type === type,
+              );
+              assert.equal(
+                tab.released,
+                tab.type !== type,
+              );
+            }
+            assert.ok(html.includes(`<strong>${label} 목록</strong>`));
+            assert.deepEqual(
+              context.browser.rows.map((row) => row.id).sort(),
+              ids,
+            );
+          }
+        }
+      },
+    );
+  },
+);
+
+test(
+  'Actor window opens and reopens on All, preserves live selection and normalizes invalid options',
+  async () => {
+    await withWorkbench(
+      async (
+        workbench,
+        module,
+      ) => {
+        const Class = workbench.constructor;
+        Class.RENDER_STATES = { CLOSED: 'closed' };
+        assert.equal(
+          new Class().activeType,
+          'all',
+        );
+        workbench.cancelActorCreation();
+        workbench.state = Class.RENDER_STATES.CLOSED;
+        const opened = module.openActorWorkbench();
+        assert.notEqual(
+          opened,
+          workbench,
+        );
+        assert.equal(
+          opened.activeType,
+          'all',
+        );
+        opened.selectActorType('npc');
+        assert.equal(
+          module.openActorWorkbench(),
+          opened,
+        );
+        assert.equal(
+          opened.activeType,
+          'npc',
+        );
+        for (const activeType of [undefined, null, '', 'vehicle']) {
+          opened.selectActorType('character');
+          await opened.open({ activeType });
+          assert.equal(
+            opened.activeType,
+            'all',
+          );
+        }
+        opened.selectActorType('npc');
+        opened.state = Class.RENDER_STATES.CLOSED;
+        const reopened = module.openActorWorkbench();
+        assert.notEqual(
+          reopened,
+          opened,
+        );
+        assert.equal(
+          reopened.activeType,
+          'all',
+        );
+      },
+    );
+  },
+);
 
 function formControls(controls) {
   return { elements: { namedItem: (name) => controls[name] ?? null } };

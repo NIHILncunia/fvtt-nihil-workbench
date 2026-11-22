@@ -1,8 +1,8 @@
 <div class="ncm-actor-workbench__layout">
   <aside class="ncm-actor-workbench__browser">
-    <div class="ncm-actor-workbench__type-tabs" role="tablist" aria-label="액터 유형">
+    <div class="ncm-actor-workbench__type-tabs" role="group" aria-label="액터 유형">
       {{#each browser.typeTabs}}
-      <button type="button" data-action="selectActorType" data-actor-type="{{value}}" class="{{#if selected}}is-selected{{/if}}">{{label}}</button>
+      <button type="button" data-action="selectActorType" data-actor-type="{{value}}" class="{{#if selected}}is-selected{{/if}}" aria-pressed="{{#if selected}}true{{else}}false{{/if}}">{{label}}</button>
       {{/each}}
     </div>
     <div class="ncm-actor-workbench__browser-heading">

@@ -69,7 +69,9 @@
 }
 .ncm-workbench__chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ncm-workbench__chip { padding: 5px 8px; }
-.ncm-workbench__chip.is-selected, .ncm-workbench__item-row.is-selected { color: #fff2cf; background: #4a3a24; border-color: var(--ncm-gold); }
+.ncm-workbench__chip.is-selected,
+.ncm-workbench__item-row.is-selected,
+.ncm-workbench .ncm-actor-workbench__type-tabs button.is-selected { color: #fff2cf; background: #4a3a24; border-color: var(--ncm-gold); }
 .ncm-workbench__damage-base { display: grid; gap: 8px; }
 .ncm-workbench__damage-types { display: grid; gap: 6px; margin-top: 2px; }
 .ncm-workbench__damage-type-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }

@@ -39,6 +39,10 @@ const BROWSER_TYPES = Object.freeze(['all', ...ACTOR_TYPES]);
 let ActorWorkbenchClass = null;
 let actorWorkbenchInstance = null;
 
+function normalizeBrowserType(type) {
+  return BROWSER_TYPES.includes(type) ? type : 'all';
+}
+
 function collectionValues(collection) {
   if (!collection) return [];
   if (Array.isArray(collection)) return collection;
@@ -201,10 +205,11 @@ export function actorEditorTabs(type) {
 export function buildActorBrowserModel({
   actors = [],
   folders = [],
-  activeType = 'character',
+  activeType = 'all',
   folderId = null,
   search = '',
 } = {}) {
+  activeType = normalizeBrowserType(activeType);
   const normalizedSearch = String(search ?? '').trim().toLocaleLowerCase('ko');
   const rows = collectionValues(actors)
     .filter(actor => isSupportedActor(actor) && (activeType === 'all' || actor.type === activeType))
@@ -271,8 +276,8 @@ export function embeddedItemCreateName(type) {
 }
 
 export class ActorWorkbenchState {
-  constructor({ activeType = 'character' } = {}) {
-    this.activeType = BROWSER_TYPES.includes(activeType) ? activeType : 'character';
+  constructor({ activeType = 'all' } = {}) {
+    this.activeType = normalizeBrowserType(activeType);
     this.browserStates = Object.fromEntries(BROWSER_TYPES.map(type => [type, browserState()]));
     this.editorTabs = Object.fromEntries(ACTOR_TYPES.map(type => [type, 'basic']));
     this.creationState = null;
@@ -298,8 +303,7 @@ export class ActorWorkbenchState {
   }
 
   selectActorType(type) {
-    if (!BROWSER_TYPES.includes(type)) return this.activeType;
-    this.activeType = type;
+    this.activeType = normalizeBrowserType(type);
     return this.activeType;
   }
 
@@ -444,7 +448,7 @@ function getActorWorkbenchClass() {
       ));
     }
 
-    activeType = 'character';
+    activeType = 'all';
     browserStates = Object.fromEntries(BROWSER_TYPES.map(type => [type, browserState()]));
     editorTabs = Object.fromEntries(ACTOR_TYPES.map(type => [type, 'basic']));
     creationState = null;
@@ -636,7 +640,7 @@ function getActorWorkbenchClass() {
     }
 
     selectActorType(type) {
-      if (BROWSER_TYPES.includes(type)) this.activeType = type;
+      this.activeType = normalizeBrowserType(type);
       return this.activeType;
     }
 
@@ -759,9 +763,13 @@ function getActorWorkbenchClass() {
       if (this.savingActor) return this;
       this.captureEditorDraft();
       this.captureActorCreationDraft();
-      if (this.creationState && (options.creationMode || options.actorId || options.activeType)
+      const hasActiveType = Object.hasOwn(
+        options,
+        'activeType',
+      );
+      if (this.creationState && (options.creationMode || options.actorId || hasActiveType)
         && !await this.abandonCreation()) return this;
-      if (options.activeType) this.selectActorType(options.activeType);
+      if (hasActiveType) this.selectActorType(options.activeType);
       if (options.creationMode === 'sbi') {
         this.beginActorCreation('npc');
         this.selectNpcCreationMethod('sbi');
