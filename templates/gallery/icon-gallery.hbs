@@ -55,7 +55,7 @@
       <div class="ncm-gallery__body">
         <div class="ncm-gallery__grid is-icon" data-icon-grid>
           {{#each entries}}
-          <button type="button" class="ncm-gallery__icon {{#if current}}is-current{{/if}} {{#if selected}}is-selected{{/if}}" data-action="choose" data-entry-id="{{id}}" title="{{name}}" aria-label="{{name}}" aria-pressed="{{selected}}">
+          <button type="button" class="ncm-gallery__icon {{#if current}}is-current{{/if}} {{#if selected}}is-selected{{/if}}" data-action="choose" data-entry-id="{{id}}" data-tooltip="{{name}}" aria-label="{{name}}" aria-pressed="{{selected}}">
             <img src="{{url}}" alt="" loading="lazy" decoding="async">
           </button>
           {{/each}}

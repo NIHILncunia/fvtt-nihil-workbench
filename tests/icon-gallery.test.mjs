@@ -357,7 +357,7 @@ test(
     assert.ok(tile);
     assert.match(
       tile[0],
-      /title="Fire bow"/,
+      /data-tooltip="Fire bow"/,
     );
     assert.match(
       tile[0],
