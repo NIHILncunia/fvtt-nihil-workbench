@@ -117,7 +117,7 @@
           <div class="ncm-workbench__eyebrow">액터 편집기 · {{selected.typeLabel}}</div>
           <h2>{{selected.name}}</h2>
         </div>
-        {{#if canManage}}<div class="ncm-workbench__header-actions">{{#unless packTarget}}<button type="button" data-action="editOwnership">사용자 권한</button>{{else}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{/unless}}<button type="button" data-action="duplicateActor">액터 복제</button><button type="button" data-action="deleteActor">액터 삭제</button></div>{{/if}}
+        {{#if canManage}}<div class="ncm-workbench__header-actions">{{#unless packTarget}}<button type="button" data-action="editOwnership">사용자 권한</button>{{else}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{/unless}}<button type="button" data-action="duplicateActor">액터 복제</button><button type="button" data-action="deleteActor">액터 삭제</button><button type="button" data-action="discardActorDraft">보관한 입력 버리기</button><button type="button" data-action="saveActor" class="ncm-workbench__save">액터 변경 저장</button></div>{{/if}}
       </header>
       <nav class="ncm-actor-workbench__editor-tabs" aria-label="액터 편집 영역">
         {{#each editorTabs}}<button type="button" data-action="selectActorEditorTab" data-editor-tab="{{key}}" class="{{#if selected}}is-selected{{/if}}">{{label}}</button>{{/each}}
@@ -336,7 +336,6 @@
           <label>월드·컴펜디움 아이템 UUID<input type="text" name="itemImportUuid" placeholder="Item.… 또는 Compendium.…"></label>
           <button type="button" data-action="importOwnedItem">소유 항목으로 복사</button>
         </div>
-        <div class="ncm-workbench__header-actions"><button type="button" data-action="discardActorDraft">보관한 입력 버리기</button><button type="button" data-action="saveActor" class="ncm-workbench__save">액터 변경 저장</button></div>
         {{/if}}
       </div>
       {{else}}
