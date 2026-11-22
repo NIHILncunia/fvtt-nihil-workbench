@@ -24,6 +24,13 @@
   <p class="ncm-workbench__notice">시설 명령 액티비티는 시스템이 자동 생성하고 관리합니다. 시설 본체에서 건설·명령·제작 설정을 수정하십시오.</p>
   {{else}}
   {{#if selected.activityWorkspace.isNative}}
+  <div class="ncm-workbench__activity-workspace-actions">
+    {{#if selected.activityWorkspace.isCreate}}<button type="button" data-action="cancelActivityWorkspace"><i class="fa-solid fa-xmark"></i> 작성 취소</button>{{else}}
+    <button type="button" data-action="duplicateActivity"><i class="fa-regular fa-copy"></i> 복제</button>
+    <button type="button" data-action="openActivityAdvanced">워크벤치 전체 액티비티 설정</button>
+    <button type="button" data-action="deleteActivity" class="danger"><i class="fa-solid fa-trash"></i> 삭제</button>{{/if}}
+    <button type="button" data-action="saveActivityWorkspace" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk"></i> 액티비티 저장</button>
+  </div>
   <nav class="ncm-workbench__activity-tabs" role="tablist" aria-label="액티비티 편집">
     {{#each selected.activityTabs}}<button type="button" role="tab" data-action="selectActivityTab" data-activity-tab="{{id}}" aria-selected="{{active}}" aria-controls="ncm-activity-panel-{{id}}" id="ncm-activity-tab-{{id}}" {{#if active}}class="is-active"{{/if}}>{{label}}</button>{{/each}}
   </nav>
@@ -149,13 +156,6 @@
     {{/each}}
   </section>
   {{/each}}
-            <div class="ncm-workbench__activity-workspace-actions">
-              <button type="button" data-action="saveActivityWorkspace"><i class="fa-solid fa-floppy-disk"></i> 액티비티 저장</button>
-              {{#if selected.activityWorkspace.isCreate}}<button type="button" data-action="cancelActivityWorkspace"><i class="fa-solid fa-xmark"></i> 작성 취소</button>{{else}}
-              <button type="button" data-action="duplicateActivity"><i class="fa-regular fa-copy"></i> 복제</button>
-              <button type="button" data-action="openActivityAdvanced">워크벤치 전체 액티비티 설정</button>
-              <button type="button" data-action="deleteActivity" class="danger"><i class="fa-solid fa-trash"></i> 삭제</button>{{/if}}
-            </div>
 
   {{else}}
   {{#if selected.isExternalActivity}}
@@ -881,6 +881,14 @@
 
   <aside class="ncm-workbench__browser">
     <header><div>{{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}<div class="ncm-workbench__eyebrow">{{#if isEmbeddedItem}}액터 소유 아이템{{else}}{{#if packTarget}}컴펜디움 아이템{{else}}월드 아이템{{/if}}{{/if}}</div><h2>아이템 탐색기</h2></div><span class="ncm-workbench__count">{{browserItemCount}}</span></header>
+    {{#if canManageItems}}
+    <div class="ncm-workbench__header-actions ncm-workbench__browser-actions">
+      {{#unless isEmbeddedItem}}<button type="button" data-action="createFolder"><i class="fa-solid fa-folder-plus"></i> 폴더 생성</button><button type="button" data-action="editFolder">폴더 편집</button><button type="button" data-action="deleteFolder">폴더 삭제</button>{{/unless}}
+      <button type="button" data-action="createItem"><i class="fa-solid fa-plus"></i> 아이템 생성</button>
+      <button type="button" data-action="duplicateItem" {{#unless selected}}disabled{{/unless}}><i class="fa-regular fa-copy"></i> 아이템 복제</button>
+      <button type="button" data-action="deleteItem" {{#unless selected}}disabled{{/unless}}>아이템 삭제</button>
+    </div>
+    {{/if}}
     <nav class="ncm-workbench__folder-nav" aria-label="Item folder path">
       <button type="button" class="ncm-workbench__folder-up icon" data-action="goParentFolder" {{#unless canGoParent}}disabled{{/unless}} title="상위 폴더"><i class="fa-solid fa-arrow-up"></i></button>
       <div class="ncm-workbench__breadcrumbs">
@@ -908,13 +916,5 @@
       {{/each}}
       {{#unless folders.length}}{{#unless items.length}}<div class="ncm-workbench__folder-empty">이 폴더는 비어 있습니다.</div>{{/unless}}{{/unless}}
     </div>
-    {{#if canManageItems}}
-    <footer class="ncm-workbench__browser-actions">
-      {{#unless isEmbeddedItem}}<button type="button" data-action="createFolder"><i class="fa-solid fa-folder-plus"></i> 폴더 생성</button><button type="button" data-action="editFolder">폴더 편집</button><button type="button" data-action="deleteFolder">폴더 삭제</button>{{/unless}}
-      <button type="button" data-action="createItem"><i class="fa-solid fa-plus"></i> 아이템 생성</button>
-      <button type="button" data-action="duplicateItem" {{#unless selected}}disabled{{/unless}}><i class="fa-regular fa-copy"></i> 아이템 복제</button>
-      <button type="button" data-action="deleteItem" {{#unless selected}}disabled{{/unless}}>아이템 삭제</button>
-    </footer>
-    {{/if}}
   </aside>
 </div>

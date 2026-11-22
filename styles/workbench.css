@@ -14,8 +14,14 @@
 .ncm-workbench__layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(330px, .9fr); height: 100%; min-height: 0; background: linear-gradient(135deg, #17140f, #0e0d0b); }
 .ncm-workbench__editor, .ncm-workbench__browser { min-width: 0; min-height: 0; }
 .ncm-workbench__editor { display: grid; grid-template-rows: auto minmax(0,1fr) auto; border-right: 1px solid var(--ncm-border); }
-.ncm-workbench__browser { display: grid; grid-template-rows: auto auto auto minmax(0,1fr) auto; background: #11100e; }
+.ncm-workbench__browser { display: flex; flex-direction: column; background: #11100e; }
+.ncm-workbench__browser > .ncm-workbench__item-list { flex: 1 1 auto; }
 .ncm-workbench__item-header, .ncm-workbench__browser > header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--ncm-border); background: rgba(35,31,25,.96); }
+/* 좁은 창에서 위쪽 단추 글자가 두 줄로 꺾이지 않게, 단추 줄이 제목 아래로 내려간다(2026-11-22). */
+.ncm-workbench__item-header { flex-wrap: wrap; }
+.ncm-workbench__item-header > div:not(.ncm-workbench__header-actions) { flex: 1 1 180px; min-width: 0; }
+.ncm-workbench__item-header .ncm-workbench__header-actions { flex-wrap: wrap; justify-content: flex-end; }
+.ncm-workbench__header-actions button { white-space: nowrap; }
 .ncm-workbench__item-header h2, .ncm-workbench__browser h2 { margin: 0; font-size: 18px; color: var(--ncm-text); }
 .ncm-workbench__item-icon { width: 48px; height: 48px; object-fit: cover; border: 1px solid var(--ncm-gold); border-radius: 4px; }
 .ncm-workbench__eyebrow { font-size: 10px; letter-spacing: .15em; color: var(--ncm-gold); font-weight: 700; }
@@ -110,7 +116,7 @@
 .ncm-workbench__folder-icon { display: grid; place-items: center; width: 36px; height: 36px; color: var(--ncm-gold); font-size: 18px; }
 .ncm-workbench__folder-row .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ncm-workbench__folder-empty { display: grid; place-items: center; min-height: 100px; color: var(--ncm-muted); font-size: 12px; }
-.ncm-workbench__browser-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px; border-top: 1px solid var(--ncm-border); background: #181612; }
+.ncm-workbench__browser > .ncm-workbench__browser-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-left: 0; padding: 10px; border-bottom: 1px solid var(--ncm-border); background: #181612; }
 .ncm-workbench__browser-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .ncm-workbench__item-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) 16px; align-items: center; gap: 8px; width: 100%; height: auto !important; min-height: 52px; box-sizing: border-box; padding: 7px; margin: 3px 0; overflow: hidden; text-align: left; background: transparent; border-color: transparent; }
 .ncm-workbench__item-row img { width: 36px; height: 36px; object-fit: cover; border-radius: 3px; }
@@ -249,7 +255,7 @@
 .ncm-workbench__activity-workspace-group { min-width: 0; margin: 10px 0; padding: 10px; border: 1px solid #4d4438; border-radius: 5px; }
 .ncm-workbench__activity-workspace-group legend { padding: 0 5px; color: var(--ncm-gold); font-size: 12px; font-weight: 700; }
 .ncm-workbench__activity-workspace-span-2 { grid-column: span 2; }
-.ncm-workbench__activity-workspace-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.ncm-workbench__activity-workspace-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0 0 10px; }
 .ncm-workbench__activity-workspace-actions .danger,
 .ncm-workbench__activity-workspace-group .danger { border-color: #8b3a3a; }
 
