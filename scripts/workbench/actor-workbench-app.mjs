@@ -1,3 +1,12 @@
+import {
+  bindWorkbenchLayout,
+  WorkbenchLayoutMixin,
+  focusWorkbenchPath,
+  focusWorkbenchOnRender,
+  restoreWorkbenchOnClose,
+  showWorkbenchForm,
+  workbenchFolderPath,
+} from './workbench-layout.mjs';
 import { openImageGallery } from '../gallery/image-gallery-app.mjs';
 
 // 시험에서는 globalThis.__ncmImageGalleryOpener로 갤러리 창 대신 다른 열기 함수를 끼운다.
@@ -367,7 +376,7 @@ function getActorWorkbenchClass() {
     throw new Error('Foundry ApplicationV2 API is not available.');
   }
 
-  class NihilActorWorkbench extends HandlebarsApplicationMixin(ApplicationV2) {
+  class NihilActorWorkbench extends WorkbenchLayoutMixin(HandlebarsApplicationMixin(ApplicationV2)) {
     static DEFAULT_OPTIONS = {
       id: 'ncm-actor-workbench',
       classes: ['ncm-workbench', 'ncm-actor-workbench'],
@@ -774,6 +783,7 @@ function getActorWorkbenchClass() {
         this.beginActorCreation('npc');
         this.selectNpcCreationMethod('sbi');
       }
+      if (options.restoreWorkbenchFocus) focusWorkbenchOnRender(this);
       const actor = options.actorId ? this.actorCollection?.get?.(options.actorId) : null;
       if (actor) this.selectActor(actor);
       this.render({ force: true });
@@ -818,7 +828,7 @@ function getActorWorkbenchClass() {
             selected: row.id === state.selectedActorId,
           })),
           selectedActorId: state.selectedActorId,
-          currentFolderName: activeFolder?.name ?? null,
+          path: workbenchFolderPath(activeFolder),
           currentFolderId: state.folderId,
           parentFolderId: activeFolder?.folder?.id ?? null,
           hasParentFolder: Boolean(state.folderId),
@@ -877,6 +887,7 @@ function getActorWorkbenchClass() {
       event.preventDefault();
       this.captureActorCreationDraft();
       this.openActorFolder(target.dataset.folderId);
+      if (target.closest?.('.ncm-workbench__path')) focusWorkbenchPath(this);
       await this.render({ force: true });
     }
 
@@ -884,6 +895,7 @@ function getActorWorkbenchClass() {
       event.preventDefault();
       this.captureActorCreationDraft();
       this.goActorParentFolder();
+      focusWorkbenchPath(this);
       await this.render({ force: true });
     }
 
@@ -894,6 +906,7 @@ function getActorWorkbenchClass() {
         this.activeType,
         { folderId: null, selectedActorId: null },
       );
+      focusWorkbenchPath(this);
       await this.render({ force: true });
     }
 
@@ -902,7 +915,10 @@ function getActorWorkbenchClass() {
       this.captureEditorDraft();
       if (this.creationState && !await this.abandonCreation()) return;
       const actor = this.actorCollection?.get?.(target.dataset.actorId);
-      if (actor) this.selectActor(actor);
+      if (actor) {
+        this.selectActor(actor);
+        showWorkbenchForm(this);
+      }
       await this.render({ force: true });
     }
 
@@ -945,6 +961,7 @@ function getActorWorkbenchClass() {
         context,
         options,
       );
+      bindWorkbenchLayout(this);
       this.bindActorDragDrop();
       this.renderedActorId = this.creationState ? null : this.selectedActor?.id;
       this.renderedActorDocument = this.creationState ? null : this.selectedActor;
@@ -1213,10 +1230,11 @@ function getActorWorkbenchClass() {
       const item = actor?.items?.get?.(target.dataset.embeddedItemId) ?? null;
       if (actor && item) {
         this.captureEditorDraft();
-        openEmbeddedItemWorkbench(
+        const child = openEmbeddedItemWorkbench(
           actor,
           item,
         );
+        restoreWorkbenchOnClose(this, child, target);
       }
     }
 
@@ -1285,6 +1303,7 @@ function getActorWorkbenchClass() {
         { folderId, selectedActorId: null },
       );
       this.beginActorCreation(type);
+      showWorkbenchForm(this);
       await this.render({ force: true });
     }
 
@@ -1578,10 +1597,13 @@ function getActorWorkbenchClass() {
       event.preventDefault();
       const actor = this.selectedActor;
       const effect = actor?.effects?.get?.(target.dataset.effectId);
-      if (this.canManageActor() && actor?.isOwner && effect) editEffect(
-        effect,
-        { canEdit: () => this.canManageActor(), afterSave: () => this.render({ force: true }) },
-      );
+      if (this.canManageActor() && actor?.isOwner && effect) {
+        const child = editEffect(
+          effect,
+          { canEdit: () => this.canManageActor(), afterSave: () => this.render({ force: true }) },
+        );
+        restoreWorkbenchOnClose(this, child, target);
+      }
     }
 
     static async _toggleActorEffectAction(
@@ -1835,6 +1857,7 @@ const packActorWorkbenches = new Map();
 export async function openPackActorWorkbench(
   packId,
   actorId = null,
+  options = {},
 ) {
   if (!canUseActorWorkbench()) return null;
   const pack = requireModulePack(
@@ -1852,7 +1875,7 @@ export async function openPackActorWorkbench(
       app,
     );
   }
-  await app.open({ actorId, activeType: 'all' });
+  await app.open({ actorId, activeType: 'all', ...options });
   await app.render({ force: true });
   app.bringToFront?.();
   return app;

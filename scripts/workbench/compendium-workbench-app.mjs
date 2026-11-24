@@ -1,3 +1,7 @@
+import {
+  bindWorkbenchLayout,
+  WorkbenchLayoutMixin,
+} from './workbench-layout.mjs';
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
   createPackDocument,
@@ -31,14 +35,14 @@ export function getCompendiumWorkbenchClass() {
   const { ApplicationV2, HandlebarsApplicationMixin } =
     globalThis.foundry.applications.api;
   WorkbenchClass = class CompendiumWorkbench extends (
-    HandlebarsApplicationMixin(ApplicationV2)
+    WorkbenchLayoutMixin(HandlebarsApplicationMixin(ApplicationV2))
   ) {
     static DEFAULT_OPTIONS = {
       id: 'ncm-compendium-workbench',
       classes: ['ncm-workbench', 'ncm-compendium-workbench'],
       tag: 'form',
       window: { title: 'Nihil Workbench · 컴펜디움 제작', resizable: true },
-      position: { width: 720, height: 700 },
+      position: { width: 1040, height: 700 },
       actions: {
         choose: this._choose,
         refresh: this._refresh,
@@ -200,6 +204,7 @@ export function getCompendiumWorkbenchClass() {
         context,
         options,
       );
+      bindWorkbenchLayout(this);
       for (const control of this.element.querySelectorAll(
         '[name=packConcept], [name=packTarget]',
       )) {

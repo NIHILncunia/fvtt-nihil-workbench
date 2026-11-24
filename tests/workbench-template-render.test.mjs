@@ -64,7 +64,7 @@ test(
         locked: false,
       },
     });
-    assert.ok(pack.trim().startsWith('<div class="ncm-actor-workbench__layout">'));
+    assert.match(pack.trim(), /^<div class="ncm-workbench__split ncm-workbench__split--actor" data-workbench-layout/);
     assert.ok(pack.trim().endsWith('</div>'));
     const itemSource = await readFile(
       new URL(
@@ -77,7 +77,7 @@ test(
       packTarget: { label: '아이템', locked: false },
       selected: null,
     });
-    assert.ok(item.trim().startsWith('<div class="ncm-workbench__layout">'));
+    assert.match(item.trim(), /^<div class="ncm-workbench__split ncm-workbench__split--item" data-workbench-layout/);
     assert.ok(item.trim().endsWith('</div>'));
     assert.match(
       world,

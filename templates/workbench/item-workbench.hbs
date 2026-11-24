@@ -332,26 +332,125 @@
   </label>
   {{/if}}
 {{/inline}}
-<div class="ncm-workbench__layout">
-  <section class="ncm-workbench__editor">
+{{#*inline "folderCrumb"}}
+<button type="button" data-action="goBreadcrumb" data-folder-id="{{id}}" class="ncm-workbench__breadcrumb{{#if current}} is-current{{/if}}" {{#if current}}aria-current="location"{{/if}}>{{name}}</button>
+{{/inline}}
+{{#*inline "folderCommands"}}
+<button type="button" data-action="createFolder"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i> 폴더 생성</button><button type="button" data-action="editFolder" {{#unless currentFolder}}disabled{{/unless}}><i class="fa-solid fa-folder-open" aria-hidden="true"></i> 폴더 편집</button><button type="button" data-action="deleteFolder" {{#unless currentFolder}}disabled{{/unless}}><i class="fa-solid fa-folder-minus" aria-hidden="true"></i> 폴더 삭제</button>
+{{/inline}}
+{{#*inline "itemCommands"}}
+<button type="button" data-action="duplicateItem" {{#unless selected}}disabled{{/unless}}><i class="fa-solid fa-copy" aria-hidden="true"></i> 아이템 복제</button><button type="button" data-action="deleteItem" {{#unless selected}}disabled{{/unless}}><i class="fa-solid fa-trash" aria-hidden="true"></i> 아이템 삭제</button>
+{{/inline}}
+<div class="ncm-workbench__split ncm-workbench__split--item" data-workbench-layout data-workbench-pane="list">
+  <div class="ncm-workbench__top">
+    <div class="ncm-workbench__toolbar">
+      {{#if canManageItems}}{{#unless isEmbeddedItem}}
+      <div class="ncm-workbench__command-group ncm-workbench__wide">
+        <span>폴더</span>
+        <div class="ncm-workbench__command-buttons">{{> folderCommands}}</div>
+      </div>
+      <details class="ncm-workbench__menu ncm-workbench__compact" data-workbench-menu="folders">
+        <summary>폴더 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          {{> folderCommands}}
+        </div>
+      </details>
+      {{/unless}}
+      <div class="ncm-workbench__command-group">
+        <span>항목</span>
+        <div class="ncm-workbench__command-buttons"><button type="button" data-action="createItem"><i class="fa-solid fa-plus"></i> 아이템 생성</button><div class="ncm-workbench__command-buttons ncm-workbench__wide">{{> itemCommands}}</div></div>
+      </div>
+      {{/if}}
+      {{#if selected}}<details class="ncm-workbench__menu" data-workbench-menu="selection">
+        <summary>선택 항목 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          {{#if canManageItems}}<div class="ncm-workbench__command-stack ncm-workbench__compact">{{> itemCommands}}</div>{{/if}}{{#if selected}}{{#if isEmbeddedItem}}<span class="ncm-workbench__muted">권한: 소유 액터에서 상속</span>{{else}}{{#if packTarget}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{else}}<button type="button" data-action="editOwnership"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> 사용자 권한</button>{{/if}}{{/if}}<button type="button" data-action="openAdvanced" class="ncm-workbench__advanced"><i class="fa-solid fa-arrow-up-right-from-square"></i> 전체 아이템 설정</button>{{/if}}
+        </div>
+      </details>{{/if}}
+      <div class="ncm-workbench__primary">{{#if selected}}<button type="submit" class="ncm-workbench__save" {{#unless canManageItems}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> 변경사항 저장</button>{{else}}<button type="submit" disabled class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk"></i> 변경사항 저장</button>{{/if}}</div>
+    </div>
+    {{#unless isEmbeddedItem}}
+    <nav class="ncm-workbench__path" aria-label="아이템 폴더 경로">
+      <button type="button" class="ncm-workbench__folder-up icon" data-action="goParentFolder" title="상위 폴더" aria-label="상위 폴더" {{#unless canGoParent}}disabled{{/unless}}><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+      <div class="ncm-workbench__path-parts">
+        <button type="button" data-action="goBreadcrumb" data-folder-id="" class="ncm-workbench__breadcrumb{{#unless canGoParent}} is-current{{/unless}}" {{#unless canGoParent}}aria-current="location"{{/unless}}><i class="fa-solid fa-star" aria-hidden="true"></i> 루트</button>
+        {{#if path.middle.length}}
+        <div class="ncm-workbench__path-segment ncm-workbench__wide"><span aria-hidden="true">/</span>
+          <details class="ncm-workbench__menu ncm-workbench__path-menu" data-workbench-menu="path-wide">
+            <summary>상위 {{path.middle.length}}개 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+            <div class="ncm-workbench__menu-panel">
+              {{#each path.middle}}
+                {{> folderCrumb}}
+              {{/each}}
+            </div>
+          </details>
+        </div>
+        {{/if}}
+        {{#if path.ancestors.length}}
+        <div class="ncm-workbench__path-segment ncm-workbench__compact"><span aria-hidden="true">/</span>
+          <details class="ncm-workbench__menu ncm-workbench__path-menu" data-workbench-menu="path-narrow">
+            <summary>상위 {{path.ancestors.length}}개 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+            <div class="ncm-workbench__menu-panel">
+              {{#each path.ancestors}}
+                {{> folderCrumb}}
+              {{/each}}
+            </div>
+          </details>
+        </div>
+        {{/if}}
+        {{#with path.parent}}
+        <div class="ncm-workbench__path-segment ncm-workbench__wide"><span aria-hidden="true">/</span>{{> folderCrumb}}</div>
+        {{/with}}
+        {{#with path.current}}
+        <div class="ncm-workbench__path-segment"><span aria-hidden="true">/</span>{{> folderCrumb}}</div>
+        {{/with}}
+      </div>
+    </nav>
+    {{else}}
+    <div class="ncm-workbench__scope"><i class="fa-solid fa-user" aria-hidden="true"></i> 액터 소유 아이템</div>
+    {{/unless}}
+  </div>
+  <div class="ncm-workbench__pane-switch" role="group" aria-label="워크벤치 표시 영역">
+    <button type="button" data-workbench-show="list" aria-pressed="true"><i class="fa-solid fa-list" aria-hidden="true"></i> 목록</button>
+    <button type="button" data-workbench-show="form" aria-pressed="false"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> 설정 폼</button>
+  </div>
+  <aside class="ncm-workbench__browser" data-workbench-panel="list">
+    <header class="ncm-workbench__list-heading"><div class="ncm-workbench__heading-text">{{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}<div class="ncm-workbench__eyebrow">{{#if isEmbeddedItem}}액터 소유 아이템{{else}}{{#if packTarget}}컴펜디움 아이템{{else}}월드 아이템{{/if}}{{/if}}</div><h2>아이템 탐색기</h2></div><span class="ncm-workbench__count">{{browserItemCount}}</span></header>
+    <div class="ncm-workbench__filters">
+      <input type="search" name="browserSearch" placeholder="이름·타입·폴더 검색" aria-label="이름·타입·폴더 검색" data-workbench-transient>
+      <select name="browserType" aria-label="아이템 타입" data-workbench-transient><option value="">모든 타입</option>{{#each itemTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select>
+    </div>
+    <div class="ncm-workbench__item-list" data-workbench-scroll="list">
+      {{#each folders}}
+      <button type="button" data-action="openFolder" data-folder-id="{{id}}" data-browser-folder data-search="{{searchText}}" class="ncm-workbench__folder-row">
+        <span class="ncm-workbench__folder-icon"><i class="fa-solid fa-folder"></i></span><span class="name">{{name}}</span><i class="fa-solid fa-chevron-right"></i>
+      </button>
+      {{/each}}
+      {{#each items}}
+      <button type="button" data-action="selectItem" data-item-id="{{id}}" data-browser-item data-search="{{searchText}}" data-item-type="{{type}}" class="ncm-workbench__item-row {{#if selected}}is-selected{{/if}}">
+        <img src="{{img}}" alt=""><span class="name">{{name}}<small>{{typeLabel}}</small></span><i class="fa-solid fa-chevron-left"></i>
+      </button>
+      {{/each}}
+      {{#unless folders.length}}{{#unless items.length}}<div class="ncm-workbench__folder-empty">이 폴더는 비어 있습니다.</div>{{/unless}}{{/unless}}
+    </div>
+  </aside>
+
+  <section class="ncm-workbench__editor" data-workbench-panel="form">
     {{#if selected}}
     <header class="ncm-workbench__item-header">
       <img src="{{selected.img}}" alt="" class="ncm-workbench__item-icon">
-      <div>
+      <div class="ncm-workbench__heading-text">
         <div class="ncm-workbench__eyebrow">아이템 편집기 · {{selected.typeLabel}}</div>
         <h2>{{selected.name}}</h2>
       </div>
       <div class="ncm-workbench__header-actions">
         {{#if isEmbeddedItem}}<button type="button" data-action="returnToActor"><i class="fa-solid fa-user"></i> 액터로 돌아가기</button>{{/if}}
-        {{#if isEmbeddedItem}}<span class="ncm-workbench__muted">권한: 소유 액터에서 상속</span>{{else}}{{#if packTarget}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{else}}<button type="button" data-action="editOwnership">사용자 권한</button>{{/if}}{{/if}}
         <button type="button" data-action="expandAllSections" title="전체 펼치기"><i class="fa-solid fa-angles-down"></i> 전체 펼치기</button>
         <button type="button" data-action="collapseAllSections" title="전체 접기"><i class="fa-solid fa-angles-up"></i> 전체 접기</button>
-        <button type="button" data-action="openAdvanced" class="ncm-workbench__advanced"><i class="fa-solid fa-arrow-up-right-from-square"></i> 전체 아이템 설정</button>
-        <button type="submit" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk"></i> 변경사항 저장</button>
       </div>
     </header>
 
-    <div class="ncm-workbench__scroll">
+    <div class="ncm-workbench__scroll" data-workbench-scroll="form">
       <details class="ncm-workbench__card ncm-workbench__collapsible" data-section-key="basic" open>
         <summary><strong>기본 정보</strong></summary>
 
@@ -878,43 +977,4 @@
     {{else}}<div class="ncm-workbench__empty"><i class="fa-solid fa-hammer"></i><h2>아이템을 선택하십시오.</h2></div>{{/if}}
     {{/if}}
   </section>
-
-  <aside class="ncm-workbench__browser">
-    <header><div>{{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}<div class="ncm-workbench__eyebrow">{{#if isEmbeddedItem}}액터 소유 아이템{{else}}{{#if packTarget}}컴펜디움 아이템{{else}}월드 아이템{{/if}}{{/if}}</div><h2>아이템 탐색기</h2></div><span class="ncm-workbench__count">{{browserItemCount}}</span></header>
-    {{#if canManageItems}}
-    <div class="ncm-workbench__header-actions ncm-workbench__browser-actions">
-      {{#unless isEmbeddedItem}}<button type="button" data-action="createFolder"><i class="fa-solid fa-folder-plus"></i> 폴더 생성</button><button type="button" data-action="editFolder">폴더 편집</button><button type="button" data-action="deleteFolder">폴더 삭제</button>{{/unless}}
-      <button type="button" data-action="createItem"><i class="fa-solid fa-plus"></i> 아이템 생성</button>
-      <button type="button" data-action="duplicateItem" {{#unless selected}}disabled{{/unless}}><i class="fa-regular fa-copy"></i> 아이템 복제</button>
-      <button type="button" data-action="deleteItem" {{#unless selected}}disabled{{/unless}}>아이템 삭제</button>
-    </div>
-    {{/if}}
-    <nav class="ncm-workbench__folder-nav" aria-label="Item folder path">
-      <button type="button" class="ncm-workbench__folder-up icon" data-action="goParentFolder" {{#unless canGoParent}}disabled{{/unless}} title="상위 폴더"><i class="fa-solid fa-arrow-up"></i></button>
-      <div class="ncm-workbench__breadcrumbs">
-        <button type="button" data-action="goBreadcrumb" data-folder-id="" class="ncm-workbench__breadcrumb {{#unless currentFolder}}is-current{{/unless}}"><i class="fa-solid fa-star"></i> 루트</button>
-        {{#each breadcrumbs}}
-        <span class="ncm-workbench__breadcrumb-separator">/</span>
-        <button type="button" data-action="goBreadcrumb" data-folder-id="{{id}}" class="ncm-workbench__breadcrumb {{#if @last}}is-current{{/if}}">{{name}}</button>
-        {{/each}}
-      </div>
-    </nav>
-    <div class="ncm-workbench__filters">
-      <input type="search" name="browserSearch" placeholder="이름·타입·폴더 검색">
-      <select name="browserType"><option value="">모든 타입</option>{{#each itemTypes}}<option value="{{value}}">{{label}}</option>{{/each}}</select>
-    </div>
-    <div class="ncm-workbench__item-list">
-      {{#each folders}}
-      <button type="button" data-action="openFolder" data-folder-id="{{id}}" data-browser-folder data-search="{{searchText}}" class="ncm-workbench__folder-row">
-        <span class="ncm-workbench__folder-icon"><i class="fa-solid fa-folder"></i></span><span class="name">{{name}}</span><i class="fa-solid fa-chevron-right"></i>
-      </button>
-      {{/each}}
-      {{#each items}}
-      <button type="button" data-action="selectItem" data-item-id="{{id}}" data-browser-item data-search="{{searchText}}" data-item-type="{{type}}" class="ncm-workbench__item-row {{#if selected}}is-selected{{/if}}">
-        <img src="{{img}}" alt=""><span class="name">{{name}}<small>{{typeLabel}}</small></span><i class="fa-solid fa-chevron-left"></i>
-      </button>
-      {{/each}}
-      {{#unless folders.length}}{{#unless items.length}}<div class="ncm-workbench__folder-empty">이 폴더는 비어 있습니다.</div>{{/unless}}{{/unless}}
-    </div>
-  </aside>
 </div>

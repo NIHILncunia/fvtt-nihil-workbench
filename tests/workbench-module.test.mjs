@@ -480,7 +480,9 @@ test('Workbench empty state spans the entire editor grid and centers its content
 
 test('Workbench stylesheet defines the independent two-column layout', async () => {
   const css = await text('styles/workbench.css');
-  assert.match(css, /\.ncm-workbench__layout/);
+  assert.match(css, /\.ncm-workbench__split\s*\{[^}]*container:\s*ncm-workbench\s*\/\s*inline-size/);
+  assert.match(css, /@container ncm-workbench \(width <= 760px\)/);
+  assert.match(css, /data-workbench-pane="list"[^\n]*data-workbench-panel="form"/);
   assert.match(css, /grid-template-columns/);
   assert.match(css, /\.ncm-workbench__editor/);
   assert.match(css, /\.ncm-workbench__browser/);
@@ -721,7 +723,7 @@ test('Item Browser navigates folders by current Folder id instead of rendering a
   assert.ok(source.includes('goBreadcrumb: NihilItemWorkbench._goBreadcrumbAction'));
   assert.ok(source.includes('folder?.folder?.id'));
   assert.ok(source.includes('worldItem.folder?.id'));
-  assert.ok(template.includes('ncm-workbench__folder-nav'));
+  assert.ok(template.includes('ncm-workbench__path'));
   assert.ok(template.includes('data-action="goParentFolder"'));
   assert.ok(template.includes('data-action="openFolder"'));
   assert.ok(template.includes('data-action="goBreadcrumb"'));
@@ -828,14 +830,12 @@ test('damage type option keeps check icon, damage icon, and text aligned', async
 test('Activity Composer damage types use three readable columns without changing standard grids', async () => {
   const css = await text('styles/workbench.css');
   const labelRule = css.match(/\.ncm-workbench__damage-type-label\s*\{[^}]*\}/s)?.[0] ?? '';
-  const mobileRules = css.split('@media (max-width: 900px)')
-    .filter((rule) => rule.includes('.ncm-workbench__damage-type-grid'))
-    .at(-1) ?? '';
+  const mobileRules = css.split('@container ncm-workbench (width <= 760px)')[1] ?? '';
   assert.match(css, /\.ncm-workbench__damage-type-grid\s*\{[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\);/s);
   assert.match(css, /\[data-activity-workspace-damage-row\]\s+\.ncm-workbench__damage-type-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);/s);
   assert.doesNotMatch(labelRule, /overflow: hidden|text-overflow: ellipsis|white-space: nowrap/);
   assert.match(mobileRules, /\.ncm-workbench__damage-type-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
-  assert.match(mobileRules, /\[data-activity-workspace-damage-row\]\s+\.ncm-workbench__damage-type-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
+  assert.match(css, /\[data-activity-workspace-damage-row\]\s+\.ncm-workbench__damage-type-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
 });
 
 

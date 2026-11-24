@@ -75,7 +75,7 @@
     <span>{{#unless needsToken}}조회 결과 <strong data-gallery-count>{{total}}</strong> / {{total}}장{{/unless}}</span>
     <div class="ncm-gallery__buttons">
       {{#if canPickLocal}}<button type="button" data-action="pickLocal">로컬 파일에서 선택</button>{{/if}}
-      <button type="button" data-action="applyIcon" disabled>이 아이콘 쓰기</button>
+      <button type="button" class="ncm-workbench__save" data-action="applyIcon" disabled><i class="fa-solid fa-check" aria-hidden="true"></i> 이 아이콘 쓰기</button>
     </div>
   </footer>
 </div>

@@ -1,14 +1,41 @@
-<div class="ncm-scene-workbench__layout">
-  <aside class="ncm-scene-workbench__list">
-    <header>
-      <span class="ncm-workbench__eyebrow">씬 워크벤치</span>
-      <h2>월드 씬</h2>
+{{#*inline "sceneCommands"}}
+{{#unless isNew}}
+        <button type="button" data-action="viewScene"><i class="fa-solid fa-eye"></i> 씬 보기</button>
+        <button type="button" data-action="deleteScene" class="danger" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-trash" aria-hidden="true"></i> 씬 삭제</button>
+        {{/unless}}
+{{/inline}}
+<div class="ncm-workbench__split ncm-workbench__split--scene" data-workbench-layout data-workbench-pane="list">
+  <div class="ncm-workbench__top">
+    <div class="ncm-workbench__toolbar">
+      <div class="ncm-workbench__command-group">
+        <span>항목</span>
+        <div class="ncm-workbench__command-buttons"><button type="button" data-action="newScene" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-plus"></i> 새 씬</button><div class="ncm-workbench__command-buttons ncm-workbench__wide">{{> sceneCommands}}</div></div>
+      </div>
+      {{#unless isNew}}<details class="ncm-workbench__menu ncm-workbench__compact" data-workbench-menu="selection">
+        <summary>선택 항목 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          {{> sceneCommands}}
+        </div>
+      </details>{{/unless}}
+      <div class="ncm-workbench__primary"><button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{#if isNew}}씬 만들기{{else}}씬 저장{{/if}}</button></div>
+    </div>
+    <div class="ncm-workbench__scope"><i class="fa-solid fa-map" aria-hidden="true"></i> 월드 씬</div>
+  </div>
+  <div class="ncm-workbench__pane-switch" role="group" aria-label="워크벤치 표시 영역">
+    <button type="button" data-workbench-show="list" aria-pressed="true"><i class="fa-solid fa-list" aria-hidden="true"></i> 목록</button>
+    <button type="button" data-workbench-show="form" aria-pressed="false"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> 설정 폼</button>
+  </div>
+  <aside class="ncm-scene-workbench__list" data-workbench-panel="list">
+    <header class="ncm-workbench__list-heading">
+      <div class="ncm-workbench__heading-text">
+        <span class="ncm-workbench__eyebrow">씬 워크벤치</span>
+        <h2>월드 씬</h2>
+      </div>
     </header>
     <div class="ncm-scene-workbench__list-tools">
       <input type="search" name="sceneSearch" value="{{search}}" placeholder="씬 이름 조회" aria-label="씬 이름 조회" data-workbench-transient>
-      <button type="button" data-action="newScene" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-plus"></i> 새 씬</button>
     </div>
-    <div class="ncm-scene-workbench__rows">
+    <div class="ncm-scene-workbench__rows" data-workbench-scroll="list">
       {{#each scenes}}
       <button type="button" class="ncm-scene-workbench__row {{#if selected}}is-selected{{/if}}" data-action="selectScene" data-scene-id="{{id}}" data-scene-row data-name="{{name}}">
         <span class="ncm-scene-workbench__row-thumb">{{#if thumb}}<img src="{{thumb}}" alt="" loading="lazy">{{/if}}</span>
@@ -21,22 +48,15 @@
     </div>
   </aside>
 
-  <section class="ncm-scene-workbench__editor">
+  <section class="ncm-scene-workbench__editor" data-workbench-panel="form">
     <header class="ncm-scene-workbench__head">
       <div>
         <span class="ncm-workbench__eyebrow">{{#if isNew}}새 씬{{else}}씬 편집{{/if}}</span>
         <label class="ncm-scene-workbench__name">씬 이름<input type="text" name="sceneName" value="{{state.name}}" placeholder="배경을 고르면 그림 이름으로 채워집니다" {{#unless canEdit}}disabled{{/unless}}></label>
       </div>
-      <div class="ncm-workbench__header-actions">
-        {{#unless isNew}}
-        <button type="button" data-action="viewScene"><i class="fa-solid fa-eye"></i> 씬 보기</button>
-        <button type="button" data-action="deleteScene" class="danger" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-trash"></i> 씬 삭제</button>
-        {{/unless}}
-        <button type="submit" class="ncm-workbench__save" {{#unless canEdit}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{#if isNew}}씬 만들기{{else}}씬 저장{{/if}}</button>
-      </div>
     </header>
 
-    <div class="ncm-workbench__scroll ncm-scene-workbench__body">
+    <div class="ncm-workbench__scroll ncm-scene-workbench__body" data-workbench-scroll="form">
       <section class="ncm-workbench__card">
         <h3>배경 이미지 <span>맵 갤러리의 배틀맵·풍경</span></h3>
         <button type="button" class="ncm-scene-workbench__preview" data-action="pickBackground" {{#unless canEdit}}disabled{{/unless}} title="클릭해서 맵 갤러리에서 고르기">

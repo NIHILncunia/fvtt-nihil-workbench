@@ -1,37 +1,108 @@
-<div class="ncm-actor-workbench__layout">
-  <aside class="ncm-actor-workbench__browser">
+{{#*inline "folderCrumb"}}
+<button type="button" data-action="openActorFolder" data-folder-id="{{id}}" data-actor-drop-folder="{{id}}" class="ncm-workbench__breadcrumb{{#if current}} is-current{{/if}}" {{#if current}}aria-current="location"{{/if}}>{{name}}</button>
+{{/inline}}
+{{#*inline "folderCommands"}}
+<button type="button" data-action="createActorFolder"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i> 폴더 생성</button>
+      {{#if browser.currentFolderId}}<button type="button" data-action="editActorFolder"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> 폴더 편집</button><button type="button" data-action="deleteActorFolder"><i class="fa-solid fa-folder-minus" aria-hidden="true"></i> 폴더 삭제</button>{{/if}}
+{{/inline}}
+{{#*inline "actorCreate"}}
+{{#if browser.isAll}}
+        <button type="button" data-action="newActor" data-actor-type="character"><i class="fa-solid fa-plus"></i> 새 PC</button>
+        <button type="button" data-action="newActor" data-actor-type="npc"><i class="fa-solid fa-plus"></i> 새 NPC</button>
+{{else}}<button type="button" data-action="newActor"><i class="fa-solid fa-plus"></i> 새 액터</button>{{/if}}
+{{/inline}}
+{{#*inline "actorCommands"}}
+<button type="button" data-action="duplicateActor"><i class="fa-solid fa-copy" aria-hidden="true"></i> 액터 복제</button><button type="button" data-action="deleteActor"><i class="fa-solid fa-trash" aria-hidden="true"></i> 액터 삭제</button>
+{{/inline}}
+<div class="ncm-workbench__split ncm-workbench__split--actor" data-workbench-layout data-workbench-pane="list">
+  <div class="ncm-workbench__top">
+    <div class="ncm-workbench__toolbar">
+      {{#if canManage}}
+      <div class="ncm-workbench__command-group ncm-workbench__wide">
+        <span>폴더</span>
+        <div class="ncm-workbench__command-buttons">{{> folderCommands}}</div>
+      </div>
+      <details class="ncm-workbench__menu ncm-workbench__compact" data-workbench-menu="folders">
+        <summary>폴더 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          {{> folderCommands}}
+        </div>
+      </details>
+      <div class="ncm-workbench__command-group ncm-workbench__wide">
+        <span>항목</span>
+        <div class="ncm-workbench__command-buttons">{{> actorCreate}}{{#unless creation}}{{#if selected}}<div class="ncm-workbench__command-buttons ncm-workbench__wide">{{> actorCommands}}</div>{{/if}}{{/unless}}</div>
+      </div>
+      {{#if browser.isAll}}<details class="ncm-workbench__menu ncm-workbench__compact" data-workbench-menu="create">
+        <summary>새 액터 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          {{> actorCreate}}
+        </div>
+      </details>{{else}}<div class="ncm-workbench__compact">{{> actorCreate}}</div>{{/if}}
+      {{#if creation}}<div class="ncm-workbench__command-buttons"><button type="button" data-action="cancelActorCreation">취소</button>
+        {{#if creation.isSbi}}<button type="button" data-action="validateSbiImport">사전 검사</button>{{/if}}</div>{{else}}{{#if selected}}<details class="ncm-workbench__menu" data-workbench-menu="selection">
+        <summary>선택 항목 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+        <div class="ncm-workbench__menu-panel">
+          <div class="ncm-workbench__command-stack ncm-workbench__compact">{{> actorCommands}}</div>{{#unless packTarget}}<button type="button" data-action="editOwnership"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> 사용자 권한</button>{{else}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{/unless}}<button type="button" data-action="discardActorDraft">보관한 입력 버리기</button><button type="button" data-action="openNativeActor"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> 워크벤치 전체 액터 설정</button>
+        </div>
+      </details>{{/if}}{{/if}}
+      <div class="ncm-workbench__primary">{{#if creation}}{{#if creation.isSbi}}
+              <button type="button" data-action="importSbi" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> 임포트</button>
+              {{else}}
+              <button type="button" data-action="saveNewActor" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> 생성</button>
+              {{/if}}{{else}}{{#if selected}}<button type="button" data-action="saveActor" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> 액터 변경 저장</button>{{else}}<button type="button" disabled data-action="saveActor" class="ncm-workbench__save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> 액터 변경 저장</button>{{/if}}{{/if}}</div>
+      {{/if}}
+    </div>
+    <nav class="ncm-workbench__path" aria-label="액터 폴더 경로">
+      <button type="button" class="ncm-workbench__folder-up icon" data-action="goActorParentFolder" data-actor-drop-folder="{{browser.parentFolderId}}" title="액터를 놓으면 상위 폴더로 이동합니다." aria-label="상위 폴더" {{#unless browser.hasParentFolder}}disabled{{/unless}}><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+      <div class="ncm-workbench__path-parts">
+        <button type="button" data-action="goActorRootFolder" data-folder-id="" data-actor-drop-folder="" title="액터를 놓으면 최상위로 이동합니다." class="ncm-workbench__breadcrumb{{#unless browser.hasParentFolder}} is-current{{/unless}}" {{#unless browser.hasParentFolder}}aria-current="location"{{/unless}}><i class="fa-solid fa-star" aria-hidden="true"></i> 루트</button>
+        {{#if browser.path.middle.length}}
+        <div class="ncm-workbench__path-segment ncm-workbench__wide"><span aria-hidden="true">/</span>
+          <details class="ncm-workbench__menu ncm-workbench__path-menu" data-workbench-menu="path-wide">
+            <summary>상위 {{browser.path.middle.length}}개 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+            <div class="ncm-workbench__menu-panel">
+              {{#each browser.path.middle}}
+                {{> folderCrumb}}
+              {{/each}}
+            </div>
+          </details>
+        </div>
+        {{/if}}
+        {{#if browser.path.ancestors.length}}
+        <div class="ncm-workbench__path-segment ncm-workbench__compact"><span aria-hidden="true">/</span>
+          <details class="ncm-workbench__menu ncm-workbench__path-menu" data-workbench-menu="path-narrow">
+            <summary>상위 {{browser.path.ancestors.length}}개 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+            <div class="ncm-workbench__menu-panel">
+              {{#each browser.path.ancestors}}
+                {{> folderCrumb}}
+              {{/each}}
+            </div>
+          </details>
+        </div>
+        {{/if}}
+        {{#with browser.path.parent}}
+        <div class="ncm-workbench__path-segment ncm-workbench__wide"><span aria-hidden="true">/</span>{{> folderCrumb}}</div>
+        {{/with}}
+        {{#with browser.path.current}}
+        <div class="ncm-workbench__path-segment"><span aria-hidden="true">/</span>{{> folderCrumb}}</div>
+        {{/with}}
+      </div>
+    </nav>
+  </div>
+  <div class="ncm-workbench__pane-switch" role="group" aria-label="워크벤치 표시 영역">
+    <button type="button" data-workbench-show="list" aria-pressed="true"><i class="fa-solid fa-list" aria-hidden="true"></i> 목록</button>
+    <button type="button" data-workbench-show="form" aria-pressed="false"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> 설정 폼</button>
+  </div>
+  <aside class="ncm-actor-workbench__browser" data-workbench-panel="list">
+    <header class="ncm-workbench__list-heading"><strong>{{browser.activeTypeLabel}} 목록</strong></header>
     <div class="ncm-actor-workbench__type-tabs" role="group" aria-label="액터 유형">
       {{#each browser.typeTabs}}
       <button type="button" data-action="selectActorType" data-actor-type="{{value}}" class="{{#if selected}}is-selected{{/if}}" aria-pressed="{{#if selected}}true{{else}}false{{/if}}">{{label}}</button>
       {{/each}}
     </div>
-    <div class="ncm-actor-workbench__browser-heading">
-      <strong>{{browser.activeTypeLabel}} 목록</strong>
-      {{#if canManage}}
-      {{#if browser.isAll}}
-      <div class="ncm-workbench__header-actions">
-        <button type="button" data-action="newActor" data-actor-type="character"><i class="fa-solid fa-plus"></i> 새 PC</button>
-        <button type="button" data-action="newActor" data-actor-type="npc"><i class="fa-solid fa-plus"></i> 새 NPC</button>
-      </div>
-      {{else}}<button type="button" data-action="newActor"><i class="fa-solid fa-plus"></i> 새 액터</button>{{/if}}
-      {{/if}}
-    </div>
     <label>이름 검색<input type="search" name="actorSearch" value="{{browser.search}}" placeholder="현재 폴더의 액터 검색"></label>
-    {{#if canManage}}
-    <div class="ncm-workbench__header-actions ncm-actor-workbench__folder-actions">
-      <button type="button" data-action="createActorFolder">폴더 생성</button>
-      {{#if browser.currentFolderId}}<button type="button" data-action="editActorFolder">폴더 편집</button><button type="button" data-action="deleteActorFolder">폴더 삭제</button>{{/if}}
-    </div>
-    {{/if}}
-    <div class="ncm-actor-workbench__folder-path">
-      {{#if browser.hasParentFolder}}
-      <button type="button" data-action="goActorParentFolder" data-actor-drop-folder="{{browser.parentFolderId}}" title="액터를 놓으면 상위 폴더로 이동합니다."><i class="fa-solid fa-arrow-left"></i> 상위 폴더</button>
-      <button type="button" data-action="goActorRootFolder" data-actor-drop-folder="" title="액터를 놓으면 최상위로 이동합니다.">최상위</button>
-      {{/if}}
-      <span data-actor-drop-folder="{{browser.currentFolderId}}">{{#if browser.currentFolderName}}{{browser.currentFolderName}}{{else}}최상위{{/if}}</span>
-      {{#if canManage}}<p class="ncm-actor-workbench__drag-hint">액터를 폴더나 상위·최상위 위치에 끌어 놓으면 이동합니다.</p>{{/if}}
-    </div>
-    <div class="ncm-actor-workbench__actor-list" data-actor-drop-folder="{{browser.currentFolderId}}">
+    {{#if canManage}}<p class="ncm-workbench__list-hint">액터를 폴더나 상위·루트 버튼에 끌어 놓으면 이동합니다.</p>{{/if}}
+    <div class="ncm-actor-workbench__actor-list" data-workbench-scroll="list" data-actor-drop-folder="{{browser.currentFolderId}}">
       {{#each browser.folders}}
       <button type="button" data-action="openActorFolder" data-folder-id="{{id}}" data-actor-drop-folder="{{id}}" class="ncm-actor-workbench__folder-row" title="액터를 놓으면 이 폴더로 이동합니다.">
         <i class="fa-solid fa-folder"></i><span>{{name}}</span>
@@ -48,7 +119,7 @@
     </div>
   </aside>
 
-  <section class="ncm-actor-workbench__editor">
+  <section class="ncm-actor-workbench__editor" data-workbench-panel="form">
     {{#if packTarget}}<p class="ncm-workbench__notice">컴펜디움 직접 편집: <strong>{{packTarget.label}}</strong> · {{#if packTarget.locked}}편집 잠김{{else}}변경 사항은 모듈 팩에 저장됩니다{{/if}}</p>{{/if}}
     {{#if pendingCount}}<p class="ncm-workbench__notice">저장 전 입력을 보관한 액터: {{pendingCount}}개. 이 창에서 탭·액터를 바꿔도 입력은 유지됩니다. 브라우저 새로고침 전에는 저장하십시오.</p>{{/if}}
     {{#each deletedDrafts}}
@@ -70,21 +141,12 @@
     {{/if}}
     {{#if creation}}
     <header class="ncm-workbench__item-header">
-      <div>
+      <div class="ncm-workbench__heading-text">
         <div class="ncm-workbench__eyebrow">새 {{browser.activeTypeLabel}} 추가</div>
         <h2>{{#if creation.name}}{{creation.name}}{{else}}새 액터{{/if}}</h2>
       </div>
-      <div class="ncm-workbench__header-actions">
-        <button type="button" data-action="cancelActorCreation">취소</button>
-        {{#if creation.isSbi}}
-        <button type="button" data-action="validateSbiImport">사전 검사</button>
-        <button type="button" data-action="importSbi" class="ncm-workbench__save">임포트</button>
-        {{else}}
-        <button type="button" data-action="saveNewActor" class="ncm-workbench__save">생성</button>
-        {{/if}}
-      </div>
     </header>
-    <div class="ncm-workbench__scroll ncm-actor-workbench__creation">
+    <div class="ncm-workbench__scroll ncm-actor-workbench__creation" data-workbench-scroll="form">
       <p class="ncm-workbench__notice">생성 위치: <strong>{{creation.folderName}}</strong></p>
       {{#if creation.isNpc}}{{#unless packTarget}}
       <div class="ncm-actor-workbench__creation-methods">
@@ -113,16 +175,15 @@
       {{#if selected}}
       <header class="ncm-workbench__item-header">
         <img src="{{selected.common.img}}" alt="" class="ncm-workbench__item-icon">
-        <div>
+        <div class="ncm-workbench__heading-text">
           <div class="ncm-workbench__eyebrow">액터 편집기 · {{selected.typeLabel}}</div>
           <h2>{{selected.name}}</h2>
         </div>
-        {{#if canManage}}<div class="ncm-workbench__header-actions">{{#unless packTarget}}<button type="button" data-action="editOwnership">사용자 권한</button>{{else}}<span class="ncm-workbench__muted">권한: 컴펜디움에서 상속</span>{{/unless}}<button type="button" data-action="duplicateActor">액터 복제</button><button type="button" data-action="deleteActor">액터 삭제</button><button type="button" data-action="discardActorDraft">보관한 입력 버리기</button><button type="button" data-action="saveActor" class="ncm-workbench__save">액터 변경 저장</button></div>{{/if}}
       </header>
       <nav class="ncm-actor-workbench__editor-tabs" aria-label="액터 편집 영역">
         {{#each editorTabs}}<button type="button" data-action="selectActorEditorTab" data-editor-tab="{{key}}" class="{{#if selected}}is-selected{{/if}}">{{label}}</button>{{/each}}
       </nav>
-      <div class="ncm-workbench__scroll ncm-actor-workbench__editor-form">
+      <div class="ncm-workbench__scroll ncm-actor-workbench__editor-form" data-workbench-scroll="form">
         {{#each editorTabs}}
           {{#if selected}}
             {{#if (eq key "basic")}}
@@ -197,7 +258,7 @@
             {{/if}}
             {{#if (eq key "token")}}<p>변경은 앞으로 배치할 토큰에 적용됩니다.</p><details><summary>추가 모듈 설정</summary><button type="button" data-action="openTokenConfig">전체 토큰 설정</button></details>{{/if}}
             {{#if (eq key "spells")}}<p>계산된 주문 내성 DC: {{../selected.spellDc}} · 주문 공격 보너스: {{../selected.spellAttack}}. 시전 능력치와 보너스 공식을 저장하면 다시 계산됩니다.</p>{{/if}}
-            {{#if (eq key "advanced")}}<p>추가 시스템 필드를 편집합니다. 사용자별 조회·수정은 상단 사용자 권한 폼에서 관리합니다. 전체 액터 설정은 워크벤치 내부에 열립니다.</p><button type="button" data-action="openNativeActor">워크벤치 전체 액터 설정</button>{{/if}}
+                {{#if (eq key "advanced")}}<p>상단의 선택 항목에서 전체 액터 설정과 사용자 권한을 열 수 있습니다.</p>{{/if}}
             {{#if (eq key "effects")}}
             <p>여러 변경값, 지속시간, 상태와 조건은 효과 편집기에서 설정합니다. 소유 아이템의 효과는 해당 아이템 편집기에서 관리합니다.</p>
             <label>새 효과 이름<input type="text" name="effectName"></label>

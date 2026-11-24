@@ -1,3 +1,11 @@
+import {
+  bindWorkbenchLayout,
+  WorkbenchLayoutMixin,
+  focusWorkbenchPath,
+  restoreWorkbenchOnClose,
+  showWorkbenchForm,
+  workbenchFolderPath,
+} from './workbench-layout.mjs';
 import { openImageGallery } from '../gallery/image-gallery-app.mjs';
 
 // 시험에서는 globalThis.__ncmImageGalleryOpener로 갤러리 창 대신 다른 열기 함수를 끼운다.
@@ -481,7 +489,7 @@ function getWorkbenchClass() {
     throw new Error('Foundry ApplicationV2 API is not available.');
   }
 
-  class NihilItemWorkbench extends HandlebarsApplicationMixin(ApplicationV2) {
+  class NihilItemWorkbench extends WorkbenchLayoutMixin(HandlebarsApplicationMixin(ApplicationV2)) {
     static DEFAULT_OPTIONS = {
       id: 'ncm-item-workbench',
       classes: ['ncm-workbench'],
@@ -781,14 +789,6 @@ function getWorkbenchClass() {
       const currentFolder = this.currentFolder;
       const childFolders = itemFolders.filter((folder) => (folder?.folder?.id ?? null) === this.currentFolderId);
       const currentItems = isEmbeddedItem ? worldItems : worldItems.filter((worldItem) => (worldItem.folder?.id ?? null) === this.currentFolderId);
-      const breadcrumbs = [];
-      let breadcrumbFolder = currentFolder;
-      const seenFolders = new Set();
-      while (breadcrumbFolder && !seenFolders.has(breadcrumbFolder.id)) {
-        seenFolders.add(breadcrumbFolder.id);
-        breadcrumbs.unshift({ id: breadcrumbFolder.id, name: breadcrumbFolder.name });
-        breadcrumbFolder = breadcrumbFolder.folder ?? null;
-      }
 
       let item = this.selectedItem;
       if (this.selectedItemId && !item && !this.inputDraft.size) {
@@ -1071,7 +1071,7 @@ function getWorkbenchClass() {
           name: folder.name,
           searchText: String(folder.name).toLowerCase(),
         })),
-        breadcrumbs,
+        path: workbenchFolderPath(currentFolder),
         currentFolder: currentFolder ? { id: currentFolder.id, name: currentFolder.name } : null,
         canGoParent: Boolean(currentFolder),
         browserItemCount: currentItems.length,
@@ -1294,12 +1294,14 @@ function getWorkbenchClass() {
         row.querySelector('[data-recovery-period]')?.addEventListener('change', () => updateRecoveryVisibility(row));
         row.querySelector('[data-recovery-type]')?.addEventListener('change', () => updateRecoveryVisibility(row));
       }
+      bindWorkbenchLayout(this);
     }
 
     static async _selectItemAction(event, target) {
       event.preventDefault();
       if (!await this.guardItemTransition()) return;
       this.selectItem(target.dataset.itemId);
+      showWorkbenchForm(this);
       await this.render({ force: true });
     }
 
@@ -1356,12 +1358,14 @@ function getWorkbenchClass() {
       event.preventDefault();
       const parentId = this.currentFolder?.folder?.id ?? null;
       this.setCurrentFolder(parentId);
+      focusWorkbenchPath(this);
       await this.render({ force: true });
     }
 
     static async _goBreadcrumbAction(event, target) {
       event.preventDefault();
       this.setCurrentFolder(target.dataset.folderId || null);
+      focusWorkbenchPath(this);
       await this.render({ force: true });
     }
 
@@ -2086,8 +2090,9 @@ function getWorkbenchClass() {
         await openPackActorWorkbench(
           actor.pack,
           actor.id,
+          { restoreWorkbenchFocus: true },
         );
-      } else openActorWorkbench({ actorId: actor.id, type: actor.type });
+      } else openActorWorkbench({ actorId: actor.id, type: actor.type, restoreWorkbenchFocus: true });
     }
 
     static async _pickItemImageAction(event) {
@@ -2170,10 +2175,17 @@ function getWorkbenchClass() {
       const item = this.selectedItem;
       if (!this.canManageItems() || item?.isOwner === false) return;
       const effect = item?.effects?.get(target.dataset.effectId);
-      if (effect) editEffect(
-        effect,
-        { canEdit: () => this.canManageItems(), afterSave: () => this.render({ force: true }) }
-      );
+      if (effect) {
+        const child = editEffect(
+          effect,
+          { canEdit: () => this.canManageItems(), afterSave: () => this.render({ force: true }) },
+        );
+        restoreWorkbenchOnClose(
+          this,
+          child,
+          target,
+        );
+      }
     }
 
     static async _toggleEffectAction(
@@ -2617,6 +2629,7 @@ export function openEmbeddedItemWorkbench(actor, item) {
       actor,
       item
     );
+    showWorkbenchForm(app, { force: true });
     await app.render({ force: true });
     app.bringToFront?.();
   };

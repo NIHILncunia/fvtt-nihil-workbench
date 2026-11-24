@@ -1,3 +1,8 @@
+import {
+  bindWorkbenchLayout,
+  WorkbenchLayoutMixin,
+  showWorkbenchForm,
+} from './workbench-layout.mjs';
 import { openImageGallery } from '../gallery/image-gallery-app.mjs';
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
@@ -40,7 +45,7 @@ let sceneWorkbench;
 export function getSceneWorkbenchClass() {
   if (SceneWorkbenchClass) return SceneWorkbenchClass;
   const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = globalThis.foundry.applications.api;
-  class NihilSceneWorkbench extends HandlebarsApplicationMixin(ApplicationV2) {
+  class NihilSceneWorkbench extends WorkbenchLayoutMixin(HandlebarsApplicationMixin(ApplicationV2)) {
     static DEFAULT_OPTIONS = {
       id: 'ncm-scene-workbench',
       classes: ['ncm-workbench', 'ncm-scene-workbench'],
@@ -125,6 +130,7 @@ export function getSceneWorkbenchClass() {
     _onRender(context, options) {
       super._onRender?.(context, options);
       const root = this.element;
+      bindWorkbenchLayout(this);
       const refreshGrid = () => {
         this.capture();
         const preview = this.gridPreview();
@@ -170,12 +176,14 @@ export function getSceneWorkbenchClass() {
     static async _selectScene(event, target) {
       event.preventDefault();
       this.selectSceneById(target.dataset.sceneId);
+      showWorkbenchForm(this);
       await this.render({ force: true });
     }
 
     static async _newScene(event) {
       event.preventDefault();
       this.selectSceneById(null);
+      showWorkbenchForm(this);
       await this.render({ force: true });
     }
 
