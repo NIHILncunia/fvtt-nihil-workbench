@@ -16,7 +16,11 @@
     </section>
     {{else}}
     <label class="{{#if json}}is-json{{else if multiline}}is-json{{/if}}"><span>{{title}}</span><small>{{path}}</small>
-      {{#if boolean}}<input type="checkbox" data-document-path="{{path}}" {{#if value}}checked{{/if}} {{#unless ../canEdit}}disabled{{/unless}}>
+      {{#if colorPicker}}<span class="ncm-folder-color" data-folder-color>
+        <color-picker data-document-path="{{path}}" value="{{value}}" placeholder="#RRGGBB" {{#unless ../canEdit}}disabled{{/unless}}></color-picker>
+        <button type="button" data-action="clearColor" title="색상 비우기" {{#unless ../canEdit}}disabled{{/unless}}>비우기</button>
+      </span>
+      {{else if boolean}}<input type="checkbox" data-document-path="{{path}}" {{#if value}}checked{{/if}} {{#unless ../canEdit}}disabled{{/unless}}>
       {{else if select}}<select data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
       {{else if json}}<textarea rows="6" data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{value}}</textarea>
       {{else if multiline}}<textarea rows="4" data-document-path="{{path}}" {{#unless ../canEdit}}disabled{{/unless}}>{{value}}</textarea>

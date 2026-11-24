@@ -1,39 +1,17 @@
+import { openWorkbenchFolder } from './folder-workbench.mjs';
 import { openDocumentWorkbench } from './document-workbench-app.mjs';
 import { prepareActorItemCopy } from './item-copy-adapter.mjs';
-import { createPackDocument, packEditAllowed, requireModulePack } from './compendium-adapter.mjs';
+import { createPackDocument, packEditAllowed } from './compendium-adapter.mjs';
 
 export function createFolderInWorkbench({ type, parent = null, pack = null, afterCreate }) {
-  const source = { name: '새 폴더', color: '#665d49', sorting: 'a' };
-  return openDocumentWorkbench({
-    title: `${type === 'Actor' ? '액터' : '아이템'} 폴더 생성`,
-    alwaysSave: true,
-    submitLabel: '폴더 생성',
-    help: '현재 탐색 중인 폴더 아래에 생성합니다.',
-    read: () => source,
-    roots: ['name', 'color', 'sorting'],
-    schema: { sorting: { choices: { a: '이름순', m: '수동 정렬' } } },
-    canEdit: () => globalThis.game?.user?.isGM !== false && (!pack || packEditAllowed(
+  return openWorkbenchFolder({
+    data: { type, folder: parent, name: '새 폴더', color: '#665d49', sorting: 'a' },
+    createOptions: { pack },
+    canCreate: () => !pack || packEditAllowed(
       pack,
       type,
-    )),
-    save: async (patch) => {
-      if (pack) requireModulePack(
-        pack,
-        type,
-        { write: true },
-      );
-      const created = await globalThis.Folder.create(
-        {
-          ...source,
-          ...patch,
-          type,
-          folder: parent,
-        },
-        { pack },
-      );
-      if (!created) throw new Error('폴더 생성이 취소되었습니다.');
-      await afterCreate?.(created);
-    },
+    ),
+    afterCreate,
   });
 }
 

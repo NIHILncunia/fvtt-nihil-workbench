@@ -43,6 +43,7 @@ export function getDocumentWorkbenchClass() {
       actions: {
         addChange: DocumentWorkbench._addChange,
         removeChange: DocumentWorkbench._removeChange,
+        clearColor: DocumentWorkbench._clearColor,
       },
       form: { closeOnSubmit: false, handler: DocumentWorkbench._save },
     };
@@ -54,14 +55,20 @@ export function getDocumentWorkbenchClass() {
     };
 
     constructor(config) {
-      super();
+      super(config.applicationOptions ?? {});
       this.config = config;
       this.fields = config.fields ?? readDocumentFields(
         config.read(),
         config.schema,
         config.roots
       );
-      for (const field of this.fields) field.effectChanges = isEffectChangesPath(field.path);
+      for (const field of this.fields) {
+        field.effectChanges = isEffectChangesPath(field.path);
+        field.colorPicker = config.colorPaths?.includes(field.path) === true;
+        if (config.folderForm && field.path === 'sorting')
+          for (const option of field.options)
+            option.label = { a: '이름순', m: '수동 정렬' }[option.value] ?? option.label;
+      }
       this.saved = false;
       this.saving = false;
     }
@@ -134,6 +141,29 @@ export function getDocumentWorkbenchClass() {
       };
     }
 
+    async _onRender(
+      context,
+      options,
+    ) {
+      await super._onRender?.(
+        context,
+        options,
+      );
+      if (!this.config.folderForm || this.folderEscapeElement === this.element) return;
+      this.folderEscapeElement = this.element;
+      this.element.addEventListener(
+        'keydown',
+        (event) => this._onFolderEscape(event),
+      );
+    }
+
+    _onFolderEscape(event) {
+      if (!this.config.folderForm || event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      void this.close();
+    }
+
     capture() {
       for (const [path, value] of Object.entries(this.values())) {
         const field = this.fields.find((entry) => entry.path === path);
@@ -142,6 +172,16 @@ export function getDocumentWorkbenchClass() {
         for (const option of field.options)
           option.selected = String(option.value) === String(value);
       }
+    }
+
+    static _clearColor(
+      event,
+      target,
+    ) {
+      event.preventDefault();
+      if (!this.config.canEdit()) return;
+      const picker = target.closest('[data-folder-color]')?.querySelector('color-picker');
+      if (picker) picker.value = '';
     }
 
     static async _addChange(event) {
@@ -209,7 +249,7 @@ export function getDocumentWorkbenchClass() {
           );
         this.config.validate?.(patch);
         if (this.config.alwaysSave || Object.keys(patch).length)
-          await this.config.save(patch);
+          this.result = await this.config.save(patch);
         this.saved = true;
         await this.close();
         await this.config.afterSave?.();
@@ -222,6 +262,8 @@ export function getDocumentWorkbenchClass() {
     }
 
     async close(options = {}) {
+      // 생성 요청 중 코어 호출자에게 취소를 먼저 반환하지 않는다.
+      if (this.saving && !this.saved) return this;
       let dirty = false;
       try {
         dirty =
@@ -237,6 +279,7 @@ export function getDocumentWorkbenchClass() {
       }
       if (
         !this.saved &&
+        !options.force &&
         dirty &&
         !(await DialogV2.confirm({
           window: { title: '입력 버리기' },
@@ -244,7 +287,12 @@ export function getDocumentWorkbenchClass() {
         }))
       )
         return this;
-      return super.close(options);
+      const result = await super.close(options);
+      if (!this.closeNotified) {
+        this.closeNotified = true;
+        this.config.onClose?.(this.saved ? this.result : null);
+      }
+      return result;
     }
   }
   EditorClass = DocumentWorkbench;
@@ -254,7 +302,12 @@ export function getDocumentWorkbenchClass() {
 export function openDocumentWorkbench(config) {
   const Class = getDocumentWorkbenchClass();
   const app = new Class(config);
-  app.render({ force: true });
+  try {
+    app.renderPromise = Promise.resolve(app.render({ force: true }));
+  } catch (error) {
+    app.renderPromise = Promise.reject(error);
+  }
+  app.renderPromise.catch((error) => globalThis.ui?.notifications?.error?.(error.message));
   return app;
 }
 
@@ -273,6 +326,15 @@ export function editDocument(
       },
     },
     roots: editableDocumentRoots(document),
+    ...(document.documentName === 'Folder' ? {
+      folderForm: true,
+      colorPaths: ['color'],
+      applicationOptions: {
+        classes: ['ncm-folder-workbench'],
+        position: { width: 640, height: 'auto' },
+        window: { title: 'Nihil Workbench · 폴더 편집' },
+      },
+    } : {}),
     canEdit: () =>
       document.isOwner !== false &&
       document.parent?.isOwner !== false &&

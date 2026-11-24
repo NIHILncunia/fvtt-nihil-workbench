@@ -2,6 +2,7 @@ import { openImageGallery, openIconGallery } from './gallery/image-gallery-app.m
 import { registerFilePickerIconHooks } from './gallery/file-picker-icons.mjs';
 import { registerGallerySettings } from './gallery/archive-images.mjs';
 import { isWorkbenchUser } from './shared/workbench-access.mjs';
+import { installFolderCreateDialog } from './workbench/folder-workbench.mjs';
 import { openStatblockImporter } from './statblock-importer/importer.mjs';
 import {
   openActorWorkbench,
@@ -417,6 +418,7 @@ globalThis.Hooks?.once?.('init', () => {
   registerWorkbenchDocumentSyncHooks();
 });
 globalThis.Hooks?.once?.('ready', () => {
+  installFolderCreateDialog();
   registerFilePickerIconHooks();
   registerApi();
   patchSceneDirectoryContextMenu();

@@ -250,6 +250,11 @@ export function buildDocumentPatch(
         throw new Error(`${field.title}: 객체 또는 목록의 원래 형식을 유지하십시오.`);
       }
       safeObject(value);
+    } else if (field.colorPicker) {
+      value = String(value ?? '').trim();
+      if (value && !/^#[0-9a-f]{6}$/i.test(value))
+        throw new Error(`${field.title}: #RRGGBB 형식의 색상을 입력하거나 비워 두십시오.`);
+      if (!value) value = field.nullable ? null : '';
     } else if (field.boolean) value = Boolean(value);
     else if (field.number) {
       if (String(value).trim() === '' && field.nullable) value = null;
