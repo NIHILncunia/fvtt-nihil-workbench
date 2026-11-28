@@ -7,6 +7,8 @@ import {
 } from './rules.mjs';
 
 export const MODULE_ID = 'nihil-compendium-module';
+// 같은 GM 계정으로 탭을 둘 열어도 카드를 한 번만 만들도록 이 탭을 구분한다(2026-11-28).
+export const CLIENT_ID = Math.random().toString(36).slice(2, 12);
 
 export const STATUS = Object.freeze({
   '퇴각': [ 'retreat', 'icons/svg/wingfoot.svg' ],
@@ -179,10 +181,13 @@ export async function saveResolve(
   }
   // 알림 확인은 별도 큐가 leaf 경로로 갱신한다. 오래된 전체 flag 복사로 덮지 않는다.
   delete state.notifiedIds;
-  await actor.setFlag(
-    MODULE_ID,
-    'resolve',
-    state
+  await actor.update(
+    {
+      [`flags.${MODULE_ID}.resolve`]: state
+    },
+    {
+      ncmResolveClient: CLIENT_ID
+    }
   );
   if (actor.type === 'npc') await syncIcons(
     actor,

@@ -23,6 +23,7 @@ import {
 } from './stress.mjs';
 
 import {
+  CLIENT_ID,
   MODULE_ID,
   STATUS,
   activeGM,
@@ -171,7 +172,8 @@ export async function afterActorUpdate(
       }
     );
   }
-  await deliverNotice(actor);
+  // 투지·의지 변경을 만든 탭이 있으면 그 탭만 카드를 만든다. 같은 GM 계정의 다른 탭은 건너뛴다.
+  if (!options.ncmResolveClient || options.ncmResolveClient === CLIENT_ID) await deliverNotice(actor);
   // 무리 대표의 값이 바뀌면 같은 장면의 다른 토큰 시트도 새 값을 보여 준다.
   if (property(
     changes,
