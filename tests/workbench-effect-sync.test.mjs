@@ -87,10 +87,11 @@ for (const hook of ['createActiveEffect', 'updateActiveEffect', 'deleteActiveEff
         await import(moduleUrl.href);
         once.get('init')();
         once.get('ready')();
+        // 워크벤치 동기화 하나와 채팅 로그 전투 기록(상태 변화) 하나. init·ready를 거쳐도 늘지 않아야 한다.
         for (const name of ['createActiveEffect', 'updateActiveEffect', 'deleteActiveEffect']) {
           assert.equal(
             listeners.get(name).length,
-            1,
+            2,
           );
         }
         const { openWorkbench, openEmbeddedItemWorkbench, syncUpdatedItemEffect } = await import(
