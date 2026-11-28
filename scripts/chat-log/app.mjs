@@ -58,10 +58,7 @@ function dialogContent(
       <legend>담을 것</legend>
       <label><input name="publicCopy" type="checkbox"> 플레이어 공개판(귓속말·GM 전용 굴림·숨긴 전투원 빼기)</label>
       <label><input name="whispers" type="checkbox" checked> 귓속말 포함</label>
-      <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center">
-        <label><input name="withScenes" type="checkbox" checked> 장면 지도</label>
-        <label style="display:inline-flex;gap:6px;align-items:center">한 장면 최소 <input name="sceneMinLines" type="number" min="1" max="500" value="20" style="width:64px"> 줄</label>
-      </div>
+      <label><input name="withScenes" type="checkbox" checked> 장면 지도(장면이 바뀌거나 자리를 옮길 때마다)</label>
       <label><input name="withCombats" type="checkbox" checked> 전투 요약과 리플레이</label>
       <label style="display:inline-flex;gap:6px;align-items:center">큰 그림 최대
         <select name="maxSize" style="width:auto">
@@ -88,7 +85,6 @@ function readForm(root) {
     publicCopy: value('publicCopy').checked,
     includeWhispers: value('whispers').checked,
     withScenes: value('withScenes').checked,
-    sceneMinLines: Math.max(1, Number(value('sceneMinLines').value) || 20),
     withCombats: value('withCombats').checked,
     maxImageSize: Number(value('maxSize').value) || 1600,
     filename: value('filename').value,
@@ -118,7 +114,6 @@ function wireDialog(
     const form = readForm(root);
     const exportButton = root.querySelector('[data-action="export"]');
     field('whispers').disabled = form.publicCopy;
-    field('sceneMinLines').disabled = !form.withScenes;
     if (Number.isNaN(form.start) || Number.isNaN(form.end) || (form.start !== null && form.end !== null && form.start > form.end)) {
       summary.textContent = '시작·끝 시각을 확인해 주세요.';
       if (exportButton) exportButton.disabled = true;
@@ -151,7 +146,7 @@ function wireDialog(
     filenameEdited = Boolean(field('filename').value.trim());
   });
   root.addEventListener('input', (event) => {
-    if (['title', 'sceneMinLines'].includes(event.target?.name)) refresh();
+    if (['title'].includes(event.target?.name)) refresh();
   });
   root.addEventListener('change', (event) => {
     if (['publicCopy', 'whispers', 'withScenes', 'withCombats', 'maxSize'].includes(event.target?.name)) refresh();

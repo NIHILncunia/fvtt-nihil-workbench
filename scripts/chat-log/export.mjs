@@ -352,7 +352,7 @@ export function chatLogRows(
 
 /**
  * 채팅 로그 HTML을 만들어 받는다.
- * options: { start, end, title, publicCopy, includeWhispers, withScenes, sceneMinLines, withCombats, maxImageSize, filename }
+ * options: { start, end, title, publicCopy, includeWhispers, withScenes, withCombats, maxImageSize, filename }
  */
 export async function exportChatLog({
   start = null,
@@ -361,7 +361,6 @@ export async function exportChatLog({
   publicCopy = false,
   includeWhispers = true,
   withScenes = true,
-  sceneMinLines = 20,
   withCombats = true,
   maxImageSize = 1600,
   filename = '',
@@ -450,8 +449,8 @@ export async function exportChatLog({
     }
 
     let sceneCount = 0;
-    if (withScenes && sceneMinLines > 0) {
-      const shots = planSceneShots(entries.map((entry) => entry.message), { minLines: sceneMinLines });
+    if (withScenes) {
+      const shots = planSceneShots(entries.map((entry) => entry.message), { minLines: 1 });
       for (const [shotIndex, shot] of shots.entries()) {
         step(0.6 + (shotIndex / Math.max(1, shots.length)) * 0.1, `장면 그림 ${shotIndex + 1} / ${shots.length}`);
         const image = await renderSceneShot(shot, maxImageSize || 1600).catch(() => null);

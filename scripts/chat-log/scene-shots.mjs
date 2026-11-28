@@ -1,5 +1,5 @@
 // 장면 컷(2026-11-28): 같은 장면·같은 자리에서 이어진 메시지를 한 컷으로 묶고,
-// 충분히 긴 컷 앞에 그때 보던 지도 부분을 넣는다.
+// 컷 앞에 그때 보던 지도 부분을 넣는다.
 //
 // 메시지마다 말한 자리를 플래그로 남긴다(메시지를 만드는 클라이언트가 저장 전에 적어 추가 쓰기가 없다).
 //   flags['nihil-compendium-module'].scene = { id, level?, x, y, scale, w, h, token?: { x, y } }
@@ -47,7 +47,7 @@ function median(values) {
  */
 export function planSceneShots(
   messages,
-  { minLines = 20, moveRatio = 0.6, skip = null } = {},
+  { minLines = 1, moveRatio = 0.6, skip = null } = {},
 ) {
   const threshold = Math.max(1, Number(minLines) || 1);
   const shots = [];
