@@ -54,3 +54,11 @@
   .ncm-resolve-block .ncm-resolve-slot { width: 24px; height: 24px; min-height: 24px; }
   .ncm-resolve-dialog label { min-height: 44px; }
 }
+
+/* 투지·의지 능력치 카드(2026-11-28): 보정치가 없으므로 점수만 크게 보인다. */
+.ability-score:is([data-ability="grit"], [data-ability="will"]) > .mod { display: none; }
+.ability-score:is([data-ability="grit"], [data-ability="will"]) > .score {
+  font-size: var(--font-size-20, 20px);
+  font-weight: 700;
+  line-height: 1.6;
+}

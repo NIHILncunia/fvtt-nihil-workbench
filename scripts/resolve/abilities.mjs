@@ -30,6 +30,8 @@ export function registerResolveAbilities(config = globalThis.CONFIG?.DND5E) {
       type: 'mental',
       reference: undefined,
       improvement: false,
+      // 투지·의지는 0부터 시작한다(2026-11-28 마스터).
+      defaults: { npc: 0, character: 0, vehicle: 0 },
     };
   }
   return true;
@@ -44,12 +46,36 @@ function initialAbilitySource(
 }
 
 /**
+ * 투지·의지에는 보정치가 없다(2026-11-28 마스터). 점수를 그대로 내성에 더하도록
+ * dnd5e가 (점수-10)/2로 계산한 보정치를 점수로 바꾸고 판정·내성·DC를 같은 만큼 옮긴다.
+ */
+export function applyRawScore(ability) {
+  if (!ability) return false;
+  const value = Number(ability.value) || 0;
+  const delta = value - (Number(ability.mod) || 0);
+  ability.mod = value;
+  if (ability.check && Number.isFinite(ability.check.value)) ability.check.value += delta;
+  if (ability.save && Number.isFinite(ability.save.value)) ability.save.value += delta;
+  if (Number.isFinite(ability.dc)) ability.dc += delta;
+  return true;
+}
+
+/**
  * dnd5e 6.1.1의 능력치 칸은 initialKeysOnly라 설정된 능력치를 모든 생물에 채운다.
  * NPC에는 그대로 두고(저장 전에는 기본값 10), PC·탈것 등에서는 준비 단계에서 뺀다.
  */
 export function patchNonNpcAbilities(models = globalThis.CONFIG?.Actor?.dataModels) {
   if (patched || !models) return false;
   patched = true;
+  const Npc = models.npc;
+  if (typeof Npc?.prototype?.prepareAbilities === 'function') {
+    const prepareAbilities = Npc.prototype.prepareAbilities;
+    Npc.prototype.prepareAbilities = function prepareAbilitiesWithResolve(...args) {
+      const result = prepareAbilities.apply(this, args);
+      for (const key of KEYS) applyRawScore(this.abilities?.[key]);
+      return result;
+    };
+  }
   for (const [type, Model] of Object.entries(models)) {
     if (type === 'npc' || typeof Model?.prototype?.prepareBaseData !== 'function') continue;
     const original = Model.prototype.prepareBaseData;

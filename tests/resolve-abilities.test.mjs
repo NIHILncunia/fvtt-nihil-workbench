@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   RESOLVE_SAVE_DC,
+  applyRawScore,
   patchNonNpcAbilities,
   registerResolveAbilities,
   resolveAbilityKey,
@@ -56,4 +57,13 @@ test('a resolve save succeeds at DC 10 and reports the total', async () => {
   assert.equal((await rollResolveSave(held, '투지')).success, true);
   const closed = { rollSavingThrow: async () => null };
   assert.equal(await rollResolveSave(closed, '투지'), null);
+});
+
+test('grit and will add their score with no modifier and start at 0', () => {
+  const ability = { value: 3, mod: -4, check: { value: -4 }, save: { value: -2 }, dc: 6 };
+  assert.equal(applyRawScore(ability), true);
+  assert.deepEqual(ability, { value: 3, mod: 3, check: { value: 3 }, save: { value: 5 }, dc: 13 });
+  const config = { abilities: { wis: {} } };
+  registerResolveAbilities(config);
+  assert.equal(config.abilities.grit.defaults.npc, 0);
 });
