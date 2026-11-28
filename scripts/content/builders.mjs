@@ -15,6 +15,7 @@ import {
   Target,
 } from './codes.mjs';
 import { code, list, number, object, runtime, text } from './internal.mjs';
+import { effectChangeForWrite, isDnd5e6, legacyArmorClassSource, senseRangeSource } from '../shared/compat.mjs';
 import { isValidChangeType, legacyModeType } from '../shared/effect-change-types.mjs';
 
 export function buildDescription(input) {
@@ -88,7 +89,7 @@ export function buildEffectChange(input) {
       rest.priority,
       { min: -Infinity, integer: true },
     );
-  return rest;
+  return effectChangeForWrite(rest);
 }
 
 export function buildActivation(input = {}) {
@@ -296,6 +297,12 @@ export function buildArmorClass(input = {}) {
     data.override,
     { integer: true },
   );
+  if (!isDnd5e6()) {
+    return legacyArmorClassSource(
+      { ...data, calc, formula },
+      armorClasses,
+    );
+  }
   if (calc != null) {
     if (calc === 'custom') {
       if (!formula) throw new Error('사용자 AC 공식을 전달하십시오.');
@@ -347,10 +354,12 @@ export function buildSenses(input = {}) {
       value,
       { integer: true },
     );
-  if (Object.keys(ranges).length || data.ranges) data.ranges = ranges;
   if (data.units != null && !(data.units in (runtime().movementUnits ?? {})))
     throw new Error('지원하지 않는 감각 단위입니다.');
-  return data;
+  return senseRangeSource(
+    data,
+    ranges,
+  );
 }
 
 export function buildCreatureType(input = {}) {

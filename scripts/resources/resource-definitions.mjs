@@ -1,4 +1,6 @@
+import { usesLegacyModule } from '../shared/compat.mjs';
 import {
+  LEGACY_MODULE_ID,
   MODULE_ID,
   SETTINGS
 } from "./constants.mjs";
@@ -6,7 +8,7 @@ import {
 export function getResourceDefinitions({ includeArchived = false } = {}) {
   const definitions = foundry.utils.deepClone(
     game.settings.get(
-      MODULE_ID,
+      usesLegacyModule(LEGACY_MODULE_ID) ? LEGACY_MODULE_ID : MODULE_ID,
       SETTINGS.RESOURCE_DEFINITIONS
     ) ?? {}
   );

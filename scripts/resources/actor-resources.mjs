@@ -1,5 +1,7 @@
+import { usesLegacyModule } from '../shared/compat.mjs';
 import {
   FLAGS,
+  LEGACY_MODULE_ID,
   MODULE_ID,
   SETTINGS
 } from "./constants.mjs";
@@ -53,7 +55,7 @@ export async function saveManagedActorUuids(uuids) {
 export function getActorResourceStore(actor) {
   return foundry.utils.deepClone(
     actor.getFlag(
-      MODULE_ID,
+      usesLegacyModule(LEGACY_MODULE_ID) ? LEGACY_MODULE_ID : MODULE_ID,
       FLAGS.ACTOR_RESOURCES
     ) ?? {}
   );
@@ -77,7 +79,7 @@ export async function saveActorResourceStore(
     }
   }
   await actor.setFlag(
-    MODULE_ID,
+    usesLegacyModule(LEGACY_MODULE_ID) ? LEGACY_MODULE_ID : MODULE_ID,
     FLAGS.ACTOR_RESOURCES,
     resources
   );

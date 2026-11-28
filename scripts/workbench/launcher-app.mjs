@@ -1,5 +1,6 @@
 import { isSceneWorkbenchOpen, toggleSceneWorkbench } from './scene-workbench-app.mjs';
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
+import { usesLegacyModule } from '../shared/compat.mjs';
 import {
   isActorWorkbenchOpen,
   toggleActorWorkbench,
@@ -7,6 +8,7 @@ import {
 import { isWorkbenchOpen, toggleWorkbench } from './workbench-app.mjs';
 import { openCompendiumWorkbench } from './compendium-workbench-app.mjs';
 import { openResourceManager } from '../resources/index.mjs';
+import { LEGACY_MODULE_ID } from '../resources/constants.mjs';
 
 let launcher;
 let LauncherClass;
@@ -69,6 +71,7 @@ export function openWorkbenchLauncher() {
           itemOpen: isWorkbenchOpen(),
           actorOpen: isActorWorkbenchOpen(),
           sceneOpen: isSceneWorkbenchOpen(),
+          legacyResourceManagerActive: usesLegacyModule(LEGACY_MODULE_ID),
         };
       }
 

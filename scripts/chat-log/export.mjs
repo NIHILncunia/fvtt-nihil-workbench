@@ -19,6 +19,9 @@ import { planSceneShots, shotCropRect } from './scene-shots.mjs';
 import { combatCardHtml, combatStartHtml, replayOrders, replayStepsFromRecord, summarizeCombat } from './combat-replay.mjs';
 import { combatRecordFolder } from './combat-recorder.mjs';
 import { buildChatLogDocument } from './document.mjs';
+import { sceneBackgroundSource } from '../shared/compat.mjs';
+
+export { sceneBackgroundSource };
 
 const VIDEO = /\.(webm|mp4|m4v|ogv)(?:[?#]|$)/i;
 
@@ -140,17 +143,6 @@ async function runPool(
       }
     },
   ));
-}
-
-/** v14는 배경이 레벨에 있다. 그 레벨(없으면 첫 레벨)의 배경 주소. */
-export function sceneBackgroundSource(
-  scene,
-  levelId = null,
-) {
-  if (!scene) return null;
-  const level = (levelId && scene.levels?.get?.(levelId)) || scene.initialLevel || scene.firstLevel || null;
-  const src = level?.background?.src ?? level?.textures?.background?.src ?? scene._source?.background?.src ?? scene._source?.img ?? null;
-  return src ? String(src).trim() : null;
 }
 
 function sceneName(scene) {

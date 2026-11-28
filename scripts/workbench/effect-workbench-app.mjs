@@ -1,3 +1,4 @@
+import { effectStartPatch } from '../shared/compat.mjs';
 import { getDocumentWorkbenchClass } from './document-workbench-app.mjs';
 import { requirePackDocument, rootDocument } from './compendium-adapter.mjs';
 import {
@@ -10,22 +11,7 @@ import {
 
 let EffectEditorClass;
 
-// v14 start는 null을 허용하는 묶음이고 time은 필수다. start가 비어 있는데 일부 칸만 넣으면
-// 검증에 걸리므로, 그때는 현재 월드 시간을 기본값으로 한 전체 묶음으로 바꿔 보낸다.
-export function effectStartPatch(patch, source, worldTime = globalThis.game?.time?.worldTime ?? 0) {
-  const keys = Object.keys(patch).filter((key) => key.startsWith('start.'));
-  if (!keys.length || source?.start) return patch;
-  const start = { combat: null, combatant: null, initiative: null, round: null, turn: null, time: worldTime };
-  const next = { ...patch };
-  for (const key of keys) {
-    const value = next[key];
-    delete next[key];
-    start[key.slice('start.'.length)] = value;
-  }
-  if (start.time == null) start.time = worldTime;
-  next.start = start;
-  return next;
-}
+export { effectStartPatch };
 
 export function canEditWorkbenchEffect(effect, callerCanEdit = () => true) {
   const parent = effect?.parent;

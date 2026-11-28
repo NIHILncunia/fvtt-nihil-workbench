@@ -1,7 +1,7 @@
 // 씬 워크벤치 계산·데이터 도우미(2026-11-21).
 // 마스터 확정: 입력은 가로 칸 수·배경색(검은색 고정)·밝기·전역 조명 켬/끔·어둠 레벨만.
 // 격자 크기 = 이미지 너비 ÷ 가로 칸 수(반올림), 장면 크기 = 이미지 원본 크기. 칸 수는 씬 플래그에만 남긴다.
-// Foundry v14: 배경 이미지·배경색은 씬이 아니라 레벨(Level) 문서에 있다.
+import { readSceneBackground, sceneBackgroundData, sceneThumbnailOptions } from '../shared/compat.mjs';
 
 export const MODULE_ID = 'nihil-compendium-module';
 export const SCENE_BACKGROUND_COLOR = '#000000';
@@ -58,7 +58,7 @@ export function normalizeSceneInput(input = {}) {
   };
 }
 
-// 새 씬 데이터(레벨 배경은 만든 뒤 sceneLevelUpdate로 따로 넣는다).
+// 새 씬 데이터. 레벨 배경은 씬을 만든 뒤 따로 넣는다.
 export function sceneCreateData(input) {
   const v = normalizeSceneInput(input);
   return {
@@ -68,6 +68,10 @@ export function sceneCreateData(input) {
     width: v.width,
     height: v.height,
     grid: { type: 1, size: v.grid.size },
+    ...sceneBackgroundData(
+      v.src,
+      SCENE_BACKGROUND_COLOR,
+    ),
     environment: {
       darknessLevel: v.darkness,
       globalLight: { enabled: v.globalLight },
@@ -85,6 +89,11 @@ export function sceneUpdateData(input) {
     width: v.width,
     height: v.height,
     'grid.size': v.grid.size,
+    ...sceneBackgroundData(
+      v.src,
+      SCENE_BACKGROUND_COLOR,
+      { dotted: true },
+    ),
     'environment.darknessLevel': v.darkness,
     'environment.globalLight.enabled': v.globalLight,
     'environment.base.luminosity': v.luminosity,
@@ -100,9 +109,9 @@ export function sceneLevelUpdate(src) {
 export function readSceneState(scene) {
   if (!scene) return null;
   const source = scene.toObject ? scene.toObject() : scene;
-  const level = (source.levels ?? []).find((entry) => entry._id === source.initialLevel) ?? (source.levels ?? [])[0] ?? null;
+  const background = readSceneBackground(source);
   const flag = source.flags?.[MODULE_ID]?.sceneWorkbench ?? {};
-  const src = level?.background?.src ?? flag.src ?? '';
+  const src = background.src ?? flag.src ?? '';
   const width = source.width ?? null;
   const height = source.height ?? null;
   const columns = flag.columns ?? columnsFromGrid(width, source.grid?.size);
@@ -116,8 +125,8 @@ export function readSceneState(scene) {
     luminosity: source.environment?.base?.luminosity ?? 0,
     globalLight: Boolean(source.environment?.globalLight?.enabled),
     darkness: source.environment?.darknessLevel ?? 0,
-    levelId: level?._id ?? null,
-    backgroundColor: level?.background?.color ?? null,
+    levelId: background.levelId,
+    backgroundColor: background.color ?? null,
   };
 }
 
@@ -144,7 +153,7 @@ export async function refreshSceneThumbnail(scene, { levelId = null, previousSrc
   if (!scene?.createThumbnail) return { updated: false, reason: '씬 썸네일 기능이 없습니다.' };
   if (!force && !needsSceneThumbnail({ thumb: scene.thumb, previousSrc, nextSrc })) return { updated: false, reason: null };
   try {
-    const { thumb } = await scene.createThumbnail(levelId ? { level: levelId } : {});
+    const { thumb } = await scene.createThumbnail(sceneThumbnailOptions(levelId));
     if (!thumb) return { updated: false, reason: '썸네일 결과가 비었습니다.' };
     await scene.update({ thumb });
     return { updated: true, reason: null };

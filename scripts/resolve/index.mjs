@@ -1,3 +1,4 @@
+import { registerResolveStatus } from '../shared/compat.mjs';
 import {
   encounterRecord,
   rampageExpired
@@ -319,15 +320,8 @@ export async function restCompleted(
 }
 
 export function registerResolveStatuses() {
-  globalThis.CONFIG ??= {};
-  globalThis.CONFIG.statusEffects ??= {};
-  for (const [ name, [ , img ] ] of Object.entries(STATUS)) {
-    const id = statusId(name);
-    globalThis.CONFIG.statusEffects[id] ??= {
-      id: id,
-      name: name,
-      img: img
-    };
+  for (const [name, [, img]] of Object.entries(STATUS)) {
+    registerResolveStatus({ id: statusId(name), name, img });
   }
 }
 

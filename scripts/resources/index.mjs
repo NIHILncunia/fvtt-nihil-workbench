@@ -1,4 +1,6 @@
+import { notifyLegacyFeature, usesLegacyModule } from '../shared/compat.mjs';
 import {
+  LEGACY_MODULE_ID,
   MODULE_ID,
   SETTINGS,
   TEMPLATES
@@ -26,6 +28,7 @@ function isResponsibleGM() {
 }
 
 export function openResourceManager() {
+  if ( usesLegacyModule(LEGACY_MODULE_ID) ) return null;
   if ( !globalThis.game?.user?.isGM ) {
     globalThis.ui?.notifications?.warn("자원 관리는 GM만 사용할 수 있습니다.");
     return null;
@@ -68,6 +71,7 @@ export function registerResourceSettings() {
 }
 
 export function injectSettingsResourceButton(html) {
+  if ( usesLegacyModule(LEGACY_MODULE_ID) ) return false;
   if ( !globalThis.game?.user?.isGM ) return false;
   const root = html?.querySelector ? html : html?.[0];
   if ( !root?.ownerDocument ) return false;
@@ -98,6 +102,13 @@ export function injectSettingsResourceButton(html) {
 /** init 단계에서 한 번 부른다. */
 export function registerResourceManager() {
   if ( registered || !globalThis.Hooks?.on ) return false;
+  if ( usesLegacyModule(LEGACY_MODULE_ID) ) {
+    globalThis.Hooks.once(
+      "ready",
+      () => notifyLegacyFeature(LEGACY_MODULE_ID),
+    );
+    return false;
+  }
   registerResourceSettings();
   registerActorResourceSheetControl();
   globalThis.foundry?.applications?.handlebars?.loadTemplates?.([

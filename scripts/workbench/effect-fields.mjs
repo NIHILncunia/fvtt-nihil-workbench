@@ -1,7 +1,7 @@
+import { effectChangesPath, usesCoreEffectIcon, usesStructuredEffectDuration } from '../shared/compat.mjs';
 import { pathValue } from './document-fields.mjs';
 import {
-  EFFECT_CHANGES_PATH,
-  isValidChangeType,
+  isValidStoredEffectChange,
 } from '../shared/effect-change-types.mjs';
 import { addDeletion } from '../shared/deletion.mjs';
 
@@ -13,7 +13,7 @@ const SHOW_ICON_CHOICES = Object.freeze({
 
 // 예전 DAE showIcon 플래그가 켜진 효과를 저장할 때 코어 showIcon으로 옮기고 플래그를 지운다.
 export function migrateLegacyShowIcon(patch, source) {
-  if (!source?.flags?.dae?.showIcon) return patch;
+  if (!usesCoreEffectIcon() || !source?.flags?.dae?.showIcon) return patch;
   return addDeletion({ showIcon: 2, ...patch }, 'flags.dae.showIcon');
 }
 
@@ -162,65 +162,92 @@ export function effectFields(
       wide: true,
     },
   );
-  // v14 코어 ActiveEffect.showIcon. DAE 14는 flags.dae.showIcon을 폐기하고 이 값(2: 항상)으로 옮긴다.
-  const showIcon = source.flags?.dae?.showIcon ? 2 : (source.showIcon ?? 1);
-  add(
-    'showIcon',
-    '토큰에 효과 아이콘 표시',
-    'basic',
-    {
-      select: true,
-      number: true,
-      integer: true,
-      options: Object.entries(SHOW_ICON_CHOICES).map(([value, label]) => ({ value, label, selected: Number(value) === showIcon })),
-    },
-  );
-  if (source.flags?.dae?.showIcon) {
-    const field = fields.at(-1);
-    // 예전 DAE 플래그가 켜진 효과는 「항상 표시」를 보여 주고, 저장하면 코어 값으로 옮긴다.
-    field.initial = field.value = '2';
-    field.legacyDaeShowIcon = true;
+  if (usesCoreEffectIcon()) {
+    // v14 코어 ActiveEffect.showIcon. DAE 14는 flags.dae.showIcon을 폐기하고 이 값(2: 항상)으로 옮긴다.
+    const showIcon = source.flags?.dae?.showIcon ? 2 : (source.showIcon ?? 1);
+    add(
+      'showIcon',
+      '토큰에 효과 아이콘 표시',
+      'basic',
+      {
+        select: true,
+        number: true,
+        integer: true,
+        options: Object.entries(SHOW_ICON_CHOICES).map(([value, label]) => ({ value, label, selected: Number(value) === showIcon })),
+      },
+    );
+    if (source.flags?.dae?.showIcon) {
+      const field = fields.at(-1);
+      // 예전 DAE 플래그가 켜진 효과는 「항상 표시」를 보여 주고, 저장하면 코어 값으로 옮긴다.
+      field.initial = field.value = '2';
+      field.legacyDaeShowIcon = true;
+    }
+  } else if (dae || source.flags?.dae?.showIcon !== undefined) {
+    add(
+      'flags.dae.showIcon',
+      '토큰에 효과 아이콘 항상 표시 (DAE)',
+      'basic',
+      { boolean: true },
+    );
   }
-  // v14: duration = { value, units, expiry }, 시작 시점은 최상위 start = { time, round, turn, combat }.
-  add(
-    'duration.value',
-    '지속 값',
-    'duration',
-    {
-      number: true,
-      nullable: true,
-      integer: true,
-      min: 0,
-    },
-  );
-  const units = source.duration?.units ?? 'seconds';
-  add(
-    'duration.units',
-    '지속 단위',
-    'duration',
-    {
-      select: true,
-      options: choiceOptions(DURATION_UNITS, units),
-    },
-  );
-  const expiry = source.duration?.expiry ?? '';
-  add(
-    'duration.expiry',
-    '만료 시점',
-    'duration',
-    {
-      select: true,
-      nullable: true,
-      options: choiceOptions(expiryChoices(), expiry),
-    },
-  );
+  const structuredDuration = usesStructuredEffectDuration();
+  if (structuredDuration) {
+    // v14: duration = { value, units, expiry }, 시작 시점은 최상위 start = { time, round, turn, combat }.
+    add(
+      'duration.value',
+      '지속 값',
+      'duration',
+      {
+        number: true,
+        nullable: true,
+        integer: true,
+        min: 0,
+      },
+    );
+    const units = source.duration?.units ?? 'seconds';
+    add(
+      'duration.units',
+      '지속 단위',
+      'duration',
+      {
+        select: true,
+        options: choiceOptions(
+          DURATION_UNITS,
+          units,
+        ),
+      },
+    );
+    const expiry = source.duration?.expiry ?? '';
+    add(
+      'duration.expiry',
+      '만료 시점',
+      'duration',
+      {
+        select: true,
+        nullable: true,
+        options: choiceOptions(
+          expiryChoices(),
+          expiry,
+        ),
+      },
+    );
+  } else {
+    for (const [key, title] of [['seconds', '지속 초'], ['rounds', '지속 라운드'], ['turns', '지속 턴']]) {
+      add(
+        `duration.${key}`,
+        title,
+        'duration',
+        { number: true, nullable: true, integer: true, min: 0 },
+      );
+    }
+  }
   for (const [key, title] of [
     ['time', '시작 월드 시간(초)'],
     ['round', '시작 라운드'],
     ['turn', '시작 턴'],
   ]) {
     add(
-      `start.${key}`,
+      structuredDuration ? `start.${key}` : `duration.start${key[0].toUpperCase()}${key.slice(1)}`,
       title,
       'duration',
       {
@@ -231,7 +258,7 @@ export function effectFields(
       },
     );
   }
-  const combatId = source.start?.combat ?? '';
+  const combatId = (structuredDuration ? source.start?.combat : source.duration?.combat) ?? '';
   const combatOptions = [
     {
       value: '',
@@ -248,7 +275,7 @@ export function effectFields(
       label: `기존 전투 · ${combatId}`,
     });
   add(
-    'start.combat',
+    structuredDuration ? 'start.combat' : 'duration.combat',
     '연결 전투',
     'duration',
     {
@@ -261,7 +288,7 @@ export function effectFields(
     },
   );
   add(
-    EFFECT_CHANGES_PATH,
+    effectChangesPath(),
     '변경값',
     'changes',
     {
@@ -366,8 +393,8 @@ export function validateEffectPatch(patch) {
     throw new Error('원본 UUID는 문서 UUID 형식(예: Actor.abc123.Item.def456)으로 입력하거나 비워 두십시오.');
   if (patch['duration.units'] !== undefined && !Object.hasOwn(DURATION_UNITS, patch['duration.units']))
     throw new Error('지속 단위를 선택하십시오.');
-  for (const change of patch[EFFECT_CHANGES_PATH] ?? patch.changes ?? []) {
-    if (!isValidChangeType(change.type))
+  for (const change of patch['system.changes'] ?? patch.changes ?? []) {
+    if (!isValidStoredEffectChange(change))
       throw new Error('효과 변경값의 적용 방식을 선택하십시오.');
     const keys = String(change.key ?? '').split('.');
     if (

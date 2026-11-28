@@ -1,3 +1,5 @@
+import { effectSourceWithChanges } from '../../shared/compat.mjs';
+import { buildEffectChange } from '../builders.mjs';
 import { content } from "../index.mjs";
 
 const MODULE_ID = "nihil-compendium-module";
@@ -36,7 +38,7 @@ export function rangedFireBonus({ workflow }) {
 }
 
 export function buildRangedFireBurn(origin) {
-  return {
+  const source = {
     name: "화염 사격 — 연소",
     img: "icons/magic/fire/flame-burning-eye.webp",
     origin,
@@ -57,6 +59,10 @@ export function buildRangedFireBurn(origin) {
     },
     flags: { [MODULE_ID]: { example: BURN } },
   };
+  return effectSourceWithChanges(
+    source,
+    source.system.changes.map(buildEffectChange),
+  );
 }
 
 async function applyBurnToActor(

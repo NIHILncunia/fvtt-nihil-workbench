@@ -1,3 +1,4 @@
+import { resolvePcEffectDisplay } from '../shared/compat.mjs';
 import {
   getSortedResourceDefinitions
 } from '../resources/resource-definitions.mjs';
@@ -140,8 +141,7 @@ export async function applyPcState(
     'ActiveEffect',
     [ {
       name: `${kind}: ${row.name}`,
-      img: globalThis.CONFIG.statusEffects[statusId(kind)]?.img,
-      showIcon: globalThis.CONST?.ACTIVE_EFFECT_SHOW_ICON?.ALWAYS,
+      ...resolvePcEffectDisplay(statusId(kind)),
       description: description,
       statuses: [ statusId(kind) ],
       changes: [],

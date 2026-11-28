@@ -1,3 +1,4 @@
+import { resolveHitPointAnchor } from '../shared/compat.mjs';
 import {
   GROUPS
 } from './parser.mjs';
@@ -273,8 +274,7 @@ export function injectResolveSheet(
   const root = html?.querySelector ? html : html?.[0];
   if (!root?.ownerDocument) return false;
   root.querySelector('.ncm-resolve-block')?.remove();
-  // dnd5e 6.1.1 npc-header.hbs의 HP 막대. 다른 시트에서는 시트 본문 첫 줄로 대체한다.
-  const hp = root.querySelector('.sheet-header .meter.hit-points, .meter.hit-points');
+  const hp = resolveHitPointAnchor(root);
   const {
     profile,
     state

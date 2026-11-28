@@ -4,6 +4,7 @@ import {
   showWorkbenchForm,
 } from './workbench-layout.mjs';
 import { openImageGallery } from '../gallery/image-gallery-app.mjs';
+import { saveSceneLevelBackground, sceneBackgroundBeforeSave } from '../shared/compat.mjs';
 import { isWorkbenchUser } from '../shared/workbench-access.mjs';
 import {
   MODULE_ID,
@@ -231,17 +232,22 @@ export function getSceneWorkbenchClass() {
       this.saving = true;
       try {
         let scene = this.scene;
+        const oldSrc = sceneBackgroundBeforeSave(scene);
         if (!scene) {
           scene = await globalThis.CONFIG.Scene.documentClass.create(sceneCreateData(this.draft));
           if (!scene) throw new Error('씬을 만들지 못했습니다.');
         } else {
           await scene.update(sceneUpdateData(this.draft));
         }
-        const level = scene.levels?.get?.(scene.initialLevel) ?? scene.levels?.contents?.[0];
-        if (!level) throw new Error('씬의 레벨을 찾지 못해 배경을 넣지 못했습니다.');
-        const previousSrc = level.background?.src ?? null;
-        await level.update(sceneLevelUpdate(this.draft.src));
-        const thumbResult = await refreshSceneThumbnail(scene, { levelId: level.id, previousSrc, nextSrc: this.draft.src });
+        const { levelId, previousSrc } = await saveSceneLevelBackground(
+          scene,
+          sceneLevelUpdate(this.draft.src),
+          oldSrc,
+        );
+        const thumbResult = await refreshSceneThumbnail(
+          scene,
+          { levelId, previousSrc, nextSrc: this.draft.src },
+        );
         this.selectSceneById(scene.id);
         globalThis.ui?.notifications?.info?.(`「${scene.name}」 씬을 저장했습니다.`);
         if (thumbResult.reason) globalThis.ui?.notifications?.warn?.(`목록 썸네일을 만들지 못했습니다: ${thumbResult.reason}`);

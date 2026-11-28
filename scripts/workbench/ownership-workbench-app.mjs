@@ -1,3 +1,4 @@
+import { ownershipReplacement } from '../shared/compat.mjs';
 import { getDocumentWorkbenchClass } from './document-workbench-app.mjs';
 
 const LEVELS = Object.freeze({ 0: '조회 불가', 1: '제한 조회', 2: '조회 가능', 3: '조회·수정 가능' });
@@ -41,7 +42,7 @@ export function ownershipPatch(patch, fields, current = null) {
   }
   // Foundry v14: 권한 묶음(DocumentOwnershipField)은 삭제 연산자를 받지 않는다.
   // 코어 권한 창처럼 바뀐 전체 권한을 ForcedReplacement(_replace)로 보낸다.
-  const replace = globalThis._replace ?? globalThis.foundry?.data?.operators?.ForcedReplacement?.create;
+  const replace = ownershipReplacement();
   if (replace && current) {
     const ownership = { ...current };
     for (const [path, value] of Object.entries(result)) {

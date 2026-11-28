@@ -1,3 +1,4 @@
+import { effectChangeForWrite, newEffectChange } from '../shared/compat.mjs';
 import {
   buildDocumentPatch,
   editableDocumentRoots,
@@ -8,7 +9,7 @@ import {
   changeTypeOf,
   effectChangeTypeOptions,
   isEffectChangesPath,
-  isValidChangeType,
+  isValidStoredEffectChange,
 } from '../shared/effect-change-types.mjs';
 
 let EditorClass;
@@ -107,7 +108,7 @@ export function getDocumentWorkbenchClass() {
             original,
             'priority',
           )) value.priority = null;
-          return value;
+          return effectChangeForWrite(value);
         });
         values[changesField.path] = JSON.stringify(
           changes,
@@ -190,7 +191,7 @@ export function getDocumentWorkbenchClass() {
       this.capture();
       const field = this.fields.find((entry) => entry.effectChanges);
       const changes = JSON.parse(field.value);
-      changes.push({ key: '', type: 'add', value: '', phase: 'initial', priority: null });
+      changes.push(newEffectChange());
       field.value = JSON.stringify(
         changes,
         null,
@@ -238,7 +239,7 @@ export function getDocumentWorkbenchClass() {
           patch[changesPath]?.some(
             (change) =>
               !change.key?.trim() ||
-              !isValidChangeType(change.type) ||
+              !isValidStoredEffectChange(change) ||
               (change.priority != null && !Number.isFinite(change.priority)),
           )
         )

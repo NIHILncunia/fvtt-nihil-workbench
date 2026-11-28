@@ -1,3 +1,4 @@
+import { ownershipReplacement } from '../shared/compat.mjs';
 import { addDeletion } from '../shared/deletion.mjs';
 const UNSAFE = new Set(['__proto__', 'prototype', 'constructor']);
 const IMMUTABLE = new Set(['_id', '_stats', '_migration', 'type']);
@@ -273,7 +274,7 @@ export function buildDocumentPatch(
     if (field.path === 'name' && !String(value).trim())
       throw new Error('이름을 입력하십시오.');
     // Foundry v14 권한 묶음은 삭제 연산자를 받지 않으므로 전체를 ForcedReplacement로 바꾼다.
-    const replace = globalThis._replace ?? globalThis.foundry?.data?.operators?.ForcedReplacement?.create;
+    const replace = ownershipReplacement();
     if (field.path === 'ownership' && replace && value && typeof value === 'object') {
       if (JSON.stringify(pathValue(current, 'ownership')) !== JSON.stringify(field.original)
         && JSON.stringify(pathValue(current, 'ownership')) !== JSON.stringify(value))

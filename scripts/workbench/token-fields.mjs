@@ -1,3 +1,4 @@
+import { detectionModeSource, hasKeyedDetectionModes } from '../shared/compat.mjs';
 import { addDeletion } from '../shared/deletion.mjs';
 const DETECTION_PATH = 'prototypeToken.detectionModes';
 
@@ -284,25 +285,26 @@ export function readTokenDetectionInputs(form) {
 
 export function validateTokenDetectionModes(modes) {
   if (!modes || typeof modes !== 'object') throw new Error('감지 모드 목록을 확인하십시오.');
-  const result = {};
+  const ids = new Set();
+  const result = [];
   for (const mode of detectionModeList(modes)) {
     const id = String(mode.id ?? '').trim();
-    if (!id || Object.hasOwn(result, id) || ['__proto__', 'prototype', 'constructor'].includes(id) || id.includes('.'))
+    if (!id || ids.has(id) || ['__proto__', 'prototype', 'constructor'].includes(id) || id.includes('.'))
       throw new Error('감지 모드를 선택하고 중복된 모드를 제거하십시오.');
     const range =
       mode.range === '' || mode.range == null ? null : Number(mode.range);
     if (range !== null && (!Number.isFinite(range) || range < 0))
       throw new Error('감지 거리는 0 이상의 숫자를 입력하십시오.');
-    const { id: _id, ...rest } = mode;
-    result[id] = { ...rest, enabled: Boolean(mode.enabled), range };
+    ids.add(id);
+    result.push({ ...mode, id, enabled: Boolean(mode.enabled), range });
   }
-  return result;
+  return detectionModeSource(result);
 }
 
 // 객체 필드는 갱신 때 키가 합쳐지므로, 지운 감지 모드는 삭제 키로 따로 보낸다.
 export function detectionModeDeletions(before, after, path = DETECTION_PATH) {
   const update = {};
-  if (!before || typeof before !== 'object' || Array.isArray(before)) return update;
+  if (!hasKeyedDetectionModes() || !before || typeof before !== 'object' || Array.isArray(before)) return update;
   for (const id of Object.keys(before)) {
     if (!after || !Object.hasOwn(after, id)) addDeletion(update, `${path}.${id}`);
   }

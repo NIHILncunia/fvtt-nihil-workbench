@@ -1,8 +1,10 @@
+import { effectChangeIsSupported, isLegacyEffectMode, legacyModeType } from './compat.mjs';
+
+export { legacyModeType };
+
 // Foundry v14 활성 효과 변경값(EffectChangeData) 도우미.
 // v14는 변경값을 `system.changes`에 두고, 적용 방식을 숫자 `mode` 대신 문자열 `type`으로 저장한다.
 // dnd5e 6.x는 CONFIG.ActiveEffect.changeTypes에 시스템 규칙형 변경 종류를 더한다.
-
-export const EFFECT_CHANGES_PATH = 'system.changes';
 
 const CORE_TYPES = Object.freeze({
   custom: 0,
@@ -24,24 +26,8 @@ const CORE_LABELS = Object.freeze({
   override: '덮어쓰기',
 });
 
-// v13 이하의 숫자 mode → v14 type. 코어 BaseActiveEffect의 이관 표와 같다.
-const LEGACY_MODES = Object.freeze({
-  0: 'custom',
-  1: 'multiply',
-  2: 'add',
-  3: 'downgrade',
-  4: 'upgrade',
-  5: 'override',
-});
-
 export function isEffectChangesPath(path) {
-  return path === EFFECT_CHANGES_PATH || path === 'changes';
-}
-
-export function legacyModeType(mode) {
-  const number = Number(mode);
-  if (mode === '' || mode == null || !Number.isInteger(number)) return null;
-  return LEGACY_MODES[number] ?? `custom.${number}`;
+  return path === 'system.changes' || path === 'changes';
 }
 
 export function changeTypeOf(change) {
@@ -84,8 +70,12 @@ export function effectChangeTypes() {
 }
 
 export function effectChangeTypeOptions(selected) {
-  const options = effectChangeTypes();
+  const options = effectChangeTypes().filter((option) => effectChangeIsSupported(option.value));
   if (selected && !options.some((option) => option.value === selected))
     options.push({ value: selected, label: `기존 설정 (${selected})` });
   return options.map((option) => ({ ...option, selected: option.value === selected }));
+}
+
+export function isValidStoredEffectChange(change) {
+  return isValidChangeType(change.type) || isLegacyEffectMode(change);
 }

@@ -1,3 +1,4 @@
+import { armorClassFields, senseRangePath } from '../shared/compat.mjs';
 import { addTokenPerceptionSections, detectionModeDeletions, validateTokenDetectionModes } from './token-fields.mjs';
 import { addActorPurposeSections } from './actor-purpose-fields.mjs';
 import { validateHabitat } from './actor-list-fields.mjs';
@@ -197,33 +198,15 @@ export function actorFieldSections(actor) {
     'combat',
     '방어·이니셔티브',
   );
-  // dnd5e 6.x: ac.calc·ac.formula는 저장되지 않는다. 계산 방식은 목록(calcs), 사용자 공식은 공식 목록(formulas)이다.
-  add(
-    combat,
-    'system.attributes.ac.calcs',
-    'AC 계산 방식(여러 개 선택 시 가장 높은 값)',
-    'set',
-    {
-      choices: config.armorClasses,
-    },
-  );
-  add(
-    combat,
-    'system.attributes.ac.formulas',
-    '사용자 AC 공식 목록(JSON, 예: [{"formula":"12 + @abilities.dex.mod","label":"비늘"}])',
-    'json',
-  );
-  add(
-    combat,
-    'system.attributes.ac.override',
-    'AC 고정값(입력하면 계산을 무시)',
-    'number',
-    {
-      min: 0,
-      integer: true,
-      nullable: true,
-    },
-  );
+  for (const [path, title, kind, options] of armorClassFields(config.armorClasses)) {
+    add(
+      combat,
+      path,
+      title,
+      kind,
+      options,
+    );
+  }
   add(
     combat,
     'system.attributes.init.bonus',
@@ -350,7 +333,6 @@ export function actorFieldSections(actor) {
     'system.attributes.movement.special',
     '특수 이동',
   );
-  // dnd5e 5.3+: 감각 거리는 senses.ranges.<감각>에 있다.
   const senseTitles = {
     darkvision: '암시야',
     blindsight: '맹시야',
@@ -366,7 +348,7 @@ export function actorFieldSections(actor) {
   for (const [key, title] of Object.entries(senseTitles)) {
     add(
       movement,
-      `system.attributes.senses.ranges.${key}`,
+      senseRangePath(key),
       title,
       'number',
       {
@@ -793,10 +775,7 @@ export function buildActorFieldUpdate(
         value,
         source.system?.details?.habitat?.value,
       );
-      if (path === 'prototypeToken.detectionModes') {
-        if (!value || typeof value !== 'object' || Array.isArray(value))
-          throw new Error(`${field.label}: 감지 모드 객체를 입력하십시오.`);
-      } else if (!Array.isArray(value))
+      if (path !== 'prototypeToken.detectionModes' && !Array.isArray(value))
         throw new Error(`${field.label}: 배열을 입력하십시오.`);
     } else if (field.kind === 'color') {
       value = String(raw ?? '').trim();

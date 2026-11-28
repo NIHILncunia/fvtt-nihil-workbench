@@ -1,3 +1,4 @@
+import { isModuleActive } from '../shared/compat.mjs';
 import {
   FLAGS,
   LEGACY_MODULE_ID,
@@ -85,7 +86,7 @@ export function readLegacyActorResources(actor) {
 }
 
 export async function migrateLegacyResources() {
-  if ( !game.user?.isGM ) return null;
+  if ( !game.user?.isGM || isModuleActive(LEGACY_MODULE_ID) ) return null;
 
   const version = Number(game.settings.get(MODULE_ID, SETTINGS.MIGRATION_VERSION) ?? 0);
   if ( version >= MIGRATION_VERSION ) return null;

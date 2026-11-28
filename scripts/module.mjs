@@ -1,3 +1,5 @@
+import { directoryContextOption, usesLegacyModule } from './shared/compat.mjs';
+import { LEGACY_MODULE_ID } from './resources/constants.mjs';
 import { openImageGallery, openIconGallery } from './gallery/image-gallery-app.mjs';
 import { registerFilePickerIconHooks } from './gallery/file-picker-icons.mjs';
 import { registerGallerySettings } from './gallery/archive-images.mjs';
@@ -49,6 +51,7 @@ const ACTOR_DIRECTORY_PATCH = Symbol.for(`${MODULE_ID}.actor-directory-context`)
 function registerApi() {
   const module = globalThis.game?.modules?.get(MODULE_ID);
   if (!module) return false;
+  const legacyResources = usesLegacyModule(LEGACY_MODULE_ID);
 
   module.api = {
     ...(module.api ?? {}),
@@ -60,13 +63,14 @@ function registerApi() {
     openImageGallery,
     openIconGallery,
     openSceneWorkbench,
-    openResourceManager,
+    ...(!legacyResources ? { openResourceManager } : {}),
     openChatLogExport,
     exportChatLog,
     getCombatRecordStatus,
     content,
     examples,
   };
+  if (legacyResources) delete module.api.openResourceManager;
   return true;
 }
 
@@ -227,7 +231,7 @@ function injectSceneDirectoryWorkbenchButton(html) {
 }
 
 function sceneWorkbenchContextOption() {
-  return {
+  return directoryContextOption({
     label: 'Nihil Workbench에서 편집',
     icon: '<i class="fa-solid fa-map"></i>',
     visible: (entry) => {
@@ -239,7 +243,7 @@ function sceneWorkbenchContextOption() {
       const sceneId = contextDocumentId(entry);
       if (sceneId) openSceneWorkbench({ sceneId });
     },
-  };
+  });
 }
 
 function registerSceneHooks() {
@@ -301,7 +305,7 @@ function contextDocumentId(entry) {
 }
 
 function workbenchContextOption() {
-  return {
+  return directoryContextOption({
     label: 'Nihil Workbench에서 편집',
     icon: '<i class="fa-solid fa-hammer"></i>',
     visible: (entry) => {
@@ -313,11 +317,11 @@ function workbenchContextOption() {
       const itemId = contextDocumentId(entry);
       if (itemId) openWorkbench(itemId);
     },
-  };
+  });
 }
 
 function actorWorkbenchContextOption() {
-  return {
+  return directoryContextOption({
     label: 'Nihil Workbench에서 편집',
     icon: '<i class="fa-solid fa-hammer"></i>',
     visible: (entry) => {
@@ -334,7 +338,7 @@ function actorWorkbenchContextOption() {
       const actorId = contextDocumentId(entry);
       if (actorId) openActorWorkbench({ actorId });
     },
-  };
+  });
 }
 
 function registerContextHook() {

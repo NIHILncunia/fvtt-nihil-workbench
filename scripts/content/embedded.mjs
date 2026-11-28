@@ -1,3 +1,4 @@
+import { applyEffectTiming, effectSourceWithChanges, needsEffectTiming } from '../shared/compat.mjs';
 import { appendAdvancementSource } from '../shared/advancement-source.mjs';
 import {
   buildActivation,
@@ -35,15 +36,19 @@ async function effect(
         source.name,
         '효과 이름',
       );
-      // v14: 변경값은 system.changes. 예전 최상위 changes도 받아 옮긴다.
       const changes = source.system?.changes ?? source.changes;
-      delete source.changes;
-      if (changes) source.system = { ...(source.system ?? {}), changes: changes.map(buildEffectChange) };
-      if (source.duration) {
-        const { duration, start } = buildEffectDuration(source.duration);
-        source.duration = duration;
-        if (start && source.start == null)
-          source.start = { time: globalThis.game?.time?.worldTime ?? 0, ...start };
+      effectSourceWithChanges(
+        source,
+        changes?.map(buildEffectChange),
+      );
+      if (needsEffectTiming(source)) {
+        applyEffectTiming(
+          source,
+          buildEffectDuration(
+            source.duration,
+            source.start,
+          ),
+        );
       }
       if (source.statuses)
         for (const status of source.statuses)

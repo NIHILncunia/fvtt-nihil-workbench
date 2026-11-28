@@ -1,3 +1,4 @@
+import { effectTimingForWrite } from '../shared/compat.mjs';
 import { number, object } from './internal.mjs';
 
 const EFFECT_DURATION_UNITS = Object.freeze(['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'rounds', 'turns']);
@@ -6,7 +7,10 @@ const LEGACY_EFFECT_DURATION_KEYS = Object.freeze(['seconds', 'rounds', 'turns',
 // 효과 지속시간을 v14 구조로 만든다. 새 형식 { value, units, expiry }와
 // 예전 형식 { seconds|rounds|turns, startTime, startRound, startTurn, combat }을 모두 받는다.
 // 돌려주는 값: { duration, start } (start는 시작 정보가 없으면 null)
-export function buildEffectDuration(input = {}) {
+export function buildEffectDuration(
+  input = {},
+  explicitStart,
+) {
   const data = object(input);
   const duration = {};
   let start = null;
@@ -41,5 +45,10 @@ export function buildEffectDuration(input = {}) {
     (start ??= {})[target] = data[key];
   }
   if (data.combat != null) (start ??= {}).combat = String(data.combat);
-  return { duration, start };
+  return effectTimingForWrite(
+    data,
+    duration,
+    start,
+    explicitStart,
+  );
 }

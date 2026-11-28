@@ -9,6 +9,9 @@
 // 현재 HP는 최대 HP를 따라 오르지 않는다. 새 최대가 현재 HP보다 작으면 현재 HP를 새 최대로 낮춘다.
 // 갱신을 만든 클라이언트(GM)만 이 훅을 실행한다.
 
+import { notifyLegacyFeature, usesLegacyModule } from '../shared/compat.mjs';
+
+const LEGACY_MODULE_ID = 'nihil-secret-hp';
 const PATCHED = Symbol.for("nihil-compendium-module.secret-hp-patched");
 
 export const MODULE_ID = "nihil-compendium-module";
@@ -320,6 +323,13 @@ let registered = false;
 /** init 단계에서 한 번 부른다. */
 export function registerSecretHp() {
   if (registered || !globalThis.Hooks?.on) return false;
+  if (usesLegacyModule(LEGACY_MODULE_ID)) {
+    globalThis.Hooks.once(
+      'ready',
+      () => notifyLegacyFeature(LEGACY_MODULE_ID),
+    );
+    return false;
+  }
   registerSecretHpSettings();
   Hooks.once("ready", patchAll);
   if (globalThis.game?.ready) patchAll();

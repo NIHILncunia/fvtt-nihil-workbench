@@ -1,7 +1,6 @@
 name: Release Module
 
-# v* 태그를 푸시하면 시험을 돌리고 module.json·module.zip을 GitHub 릴리스로 올린다.
-# Foundry는 module.json의 manifest 주소(releases/latest/download/module.json)로 새 판을 확인한다.
+# v* 태그를 푸시하면 시험을 돌리고 Foundry 13·14 설치 파일을 같은 릴리스에 올린다.
 on:
   push:
     tags:
@@ -72,6 +71,11 @@ jobs:
             cd dist/package
             zip -qr ../module.zip .
           )
+          node tools/build-v13.mjs
+          (
+            cd dist/v13
+            zip -qr ../module-v13.zip .
+          )
         env:
           REPO_URL: https://github.com/${{ github.repository }}
           TAG: ${{ github.ref_name }}
@@ -82,4 +86,6 @@ jobs:
           files: |
             dist/module.json
             dist/module.zip
+            dist/module-v13.json
+            dist/module-v13.zip
           generate_release_notes: true
