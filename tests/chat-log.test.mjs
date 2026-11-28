@@ -194,7 +194,7 @@ test('the replay runtime source is self-contained and the document wires tools i
     body: '<div class="message general" data-time="1"><img src="__HXIMG_0__"></div>',
     toc: [{ type: 'day', anchor: 'd-2026-11-26', label: '2026년 11월 26일 (목)', time: '21:00' }, { type: 'scene', anchor: 's-1', label: '임시 거처', time: '21:05' }],
     images: { __HXIMG_0__: 'data:image/webp;base64,AAAA' },
-    portraits: { '--hp0': 'data:image/webp;base64,BBBB' },
+    portraits: { '--hp0': 'data:image/webp;base64,BBBB', '--hp1': '' },
     hasWhispers: true,
     hasScenes: true,
     hasReplay: true,
@@ -202,6 +202,7 @@ test('the replay runtime source is self-contained and the document wires tools i
   assert.match(html, /<title>늑대와 소녀 &lt;시험&gt;<\/title>/);
   assert.match(html, /src="data:image\/webp;base64,AAAA"/);
   assert.match(html, /--hp0:url\("data:image\/webp;base64,BBBB"\)/);
+  assert.match(html, /--hp1:none;/);
   assert.match(html, /href="#s-1">📍 임시 거처<small>21:05<\/small>/);
   assert.match(html, /hx-hide-whispers/);
   assert.match(html, /id="scene-panel"/);

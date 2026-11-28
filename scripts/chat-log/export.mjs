@@ -499,7 +499,8 @@ export async function exportChatLog({
       6,
       async ([src, name]) => {
         const dataUrl = await shrunkDataUrl(src, 160, { square: true });
-        portraitData[name] = dataUrl ?? absoluteUrl(src) ?? '';
+        // 읽지 못한 초상(404 등)은 깨진 주소를 남기지 않고 비운다.
+        portraitData[name] = dataUrl ?? '';
         if (dataUrl) imageCount += 1;
         done += 1;
       },

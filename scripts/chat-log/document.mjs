@@ -253,7 +253,7 @@ export function buildChatLogDocument({
 }) {
   let html = body;
   for (const [placeholder, dataUrl] of Object.entries(images)) html = html.split(placeholder).join(dataUrl);
-  const rootVariables = Object.entries(portraits).map(([name, dataUrl]) => `${name}:url("${dataUrl}");`).join('');
+  const rootVariables = Object.entries(portraits).map(([name, dataUrl]) => (dataUrl ? `${name}:url("${dataUrl}");` : `${name}:none;`)).join('');
   return `<!doctype html>
 <html lang="ko">
 <head>
