@@ -186,14 +186,19 @@ export async function chooseCondition(
     if (amount == null) return;
   }
   // 차감 조건은 투지·의지 내성(DC 10)에 실패했을 때만 칸을 줄인다(2026-11-28 마스터).
-  if (chosen.group.endsWith('차감')) {
+  // 굴림은 한 번만 한다: PC 판정 결과로 칸을 고르는 조건은 그 판정이 굴림이므로 내성을 굴리지 않는다.
+  if (chosen.group.endsWith('차감') && !chosen.choice) {
     const save = await rollResolveSave(
       actor,
       axis
     );
     if (!save) return;
     if (save.success) {
-      globalThis.ui?.notifications?.info(`${actor.name}: ${axis} 내성 ${save.total} — DC ${RESOLVE_SAVE_DC}을 넘어 견뎠습니다. 칸은 그대로입니다.`);
+      await markConditionUsed(
+        actor,
+        chosen
+      );
+      globalThis.ui?.notifications?.info(`${actor.name}: ${axis} 내성 ${save.total} — DC ${RESOLVE_SAVE_DC}에 성공해 견뎠습니다. 칸은 그대로이고, 이 조건은 쓴 조건으로 표시합니다.`);
       return;
     }
   }
@@ -205,6 +210,32 @@ export async function chooseCondition(
       number: chosen.number,
       amount: amount,
       repeat: repeat
+    }
+  );
+}
+
+/** 내성으로 견딘 조건도 쓴 조건으로 남겨 같은 조건을 다시 굴리지 않게 한다. */
+async function markConditionUsed(
+  actor,
+  chosen
+) {
+  await serial(
+    actor.uuid,
+    async () => {
+      const {
+        state
+      } = readResolve(actor);
+      const record = encounterRecord(
+        state,
+        combatContext(actor)?.id
+      );
+      const key = `${chosen.group} ${chosen.number}`;
+      if (record.used.includes(key)) return;
+      record.used = [ ...record.used, key ];
+      await saveResolve(
+        actor,
+        state
+      );
     }
   );
 }
