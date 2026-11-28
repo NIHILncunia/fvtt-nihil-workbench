@@ -26,6 +26,17 @@ v13 `luxterra-resource-manager` 1.1.1의 자원 관리 기능만 옮겼습니다
 - 저장: 월드 설정 `nihil-compendium-module.resourceDefinitions`·`managedActorUuids`, Actor flag `flags.nihil-compendium-module.resources`.
 - 이관: 활성 GM이 월드를 열 때 한 번, 옛 `luxterra-resource-manager`의 월드 설정과 Actor flag에서 이 모듈에 없는 정의·관리 대상·값만 복사합니다. 옛 자료는 지우지 않습니다.
 
+## 채팅 내보내기
+
+created-gallery 채팅 아카이브의 HTML 내보내기를 대신하는 자체 기능입니다(맵 삽입은 없음). GM만 씁니다.
+
+- 사이드바 설정 탭의 `채팅 내보내기` 단추나 `api.openChatExport()`로 창을 엽니다.
+- 날짜(가장 최근 날이 기본, 전체, 직접 지정)와 시작·끝 시각을 고르면 메시지 수와 파일 이름이 바로 바뀝니다. 기본 파일 이름에는 날짜가 붙습니다(`채팅 기록 2026-11-28.html`, 여러 날이면 `채팅 기록 2026-11-27~2026-11-28.html`).
+- 귓속말 포함 여부, 그림을 파일 안에 넣을지, 큰 그림 최대 크기를 고릅니다. 그림은 WebP로 줄여 넣어 Foundry 서버 없이도 열립니다.
+- 받은 HTML은 날짜별 구분선과 날짜 목록, 메시지마다 한국 표준시 시각, 귓속말 표시, 이름·내용 찾기, 귓속말 숨기기, 카드·굴림 세부 펼치기를 갖습니다.
+- 다운로드 링크를 문서에 붙이지 않고 누릅니다. 붙이면 Foundry 문서 클릭 처리기가 새 탭으로 돌립니다.
+- 원본 메시지는 바꾸지 않습니다. 코드에서 바로 받으려면 `api.exportChatHtml({ start, end, includeWhispers, embedImages, maxImageSize, filename })`.
+
 ## 설치
 
 Foundry의 모듈 설치 화면에서 아래 manifest 주소를 넣습니다.

@@ -28,6 +28,7 @@ import { injectSettingsResourceButton, openResourceManager, registerResourceMana
 import { registerSecretHp } from './secret-hp/secret-hp.mjs';
 import { registerResolve } from './resolve/index.mjs';
 import { registerTokenPortraitDefault } from './shared/token-portrait-default.mjs';
+import { exportChatHtml, injectSettingsChatExportButton, openChatExport } from './chat-export/chat-export-app.mjs';
 
 const MODULE_ID = 'nihil-compendium-module';
 const PRIVILEGED_USER_IDS = new Set(['rDepyiOStMqbIYMg', 'rXB1GcSui4mDsgAn']);
@@ -57,6 +58,8 @@ function registerApi() {
     openIconGallery,
     openSceneWorkbench,
     openResourceManager,
+    openChatExport,
+    exportChatHtml,
     content,
     examples,
   };
@@ -276,6 +279,7 @@ function registerSettingsRenderHook() {
     ) => {
     injectSettingsWorkbenchButton(html);
     injectSettingsResourceButton(html);
+    injectSettingsChatExportButton(html);
     // The resource manager may insert its button later in the same hook dispatch.
     queueMicrotask(() => injectSettingsWorkbenchButton(html));
   }
