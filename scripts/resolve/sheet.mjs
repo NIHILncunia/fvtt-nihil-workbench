@@ -18,6 +18,11 @@ import {
 } from './stress.mjs';
 
 import {
+  RESOLVE_SAVE_DC,
+  rollResolveSave
+} from './abilities.mjs';
+
+import {
   assertGM,
   combatContext,
   readResolve,
@@ -179,6 +184,18 @@ export async function chooseCondition(
       }
     );
     if (amount == null) return;
+  }
+  // 차감 조건은 투지·의지 내성(DC 10)에 실패했을 때만 칸을 줄인다(2026-11-28 마스터).
+  if (chosen.group.endsWith('차감')) {
+    const save = await rollResolveSave(
+      actor,
+      axis
+    );
+    if (!save) return;
+    if (save.success) {
+      globalThis.ui?.notifications?.info(`${actor.name}: ${axis} 내성 ${save.total} — DC ${RESOLVE_SAVE_DC}을 넘어 견뎠습니다. 칸은 그대로입니다.`);
+      return;
+    }
   }
   await changeActorResolve(
     actor,

@@ -13,6 +13,10 @@ import {
 } from './sheet.mjs';
 
 import {
+  registerResolveAbilityHooks
+} from './abilities.mjs';
+
+import {
   pcStress,
   removePcEffect,
   stressDefinition
@@ -329,6 +333,7 @@ export function registerResolve() {
   if (registered || !globalThis.Hooks?.on) return false;
   registered = true;
   registerResolveStatuses();
+  registerResolveAbilityHooks(globalThis.Hooks);
   // dnd5e가 초기화 중 상태 목록을 다시 구성하더라도 모듈 상태를 유지한다.
   globalThis.Hooks.once(
     'setup',
